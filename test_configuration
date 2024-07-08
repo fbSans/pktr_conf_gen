@@ -1,0 +1,96 @@
+
+#SPEC -> {} | {ENTRY} |{ENTRY, SPEC}
+#ENTRY -> VLAN_DESC  | SWITCH_INFO_DESC | ROUTER_INFO_DESC | CONFIG_DESC | IF_DESC
+
+#fall back for any unspecified config field in any DEVICE_INFO
+#This is a definition of a simple topology
+#kinda big I see
+{
+    DEFAULT_CONFIG: {
+                HOSTNAME: "",
+                DOMAIN_NAME: "internal_net",
+                PASSWORD: "feuem",
+                MOTD: "Acesso negado",
+                LINE_CONSOLE: 0,
+                LINE_VTY: {START: 0, END: 4},
+                ENABLE_SSH: FALSE,
+                #ssh_key_bit: 
+                SSH_PASSWORD: something_like_012345,
+            },
+    #specifying all known vlns
+    VLAN_INFO: {NUMBER: 10, NAME: "GESTAO",     IP_ADDRESS: "192.168.10.0 255.255.255.0", GATEWAY: "192.168.10.254 255.255.255.0", DHCP: FALSE},
+    VLAN_INFO: {NUMBER: 20, NAME: "CLIENTE",    IP_ADDRESS: "192.168.20.0 255.255.255.0", GATEWAY: "192.168.20.254 255.255.255.0", DHCP: TRUE },
+    VLAN_INFO: {NUMBER: 30, NAME: "SERVIDORES", IP_ADDRESS: "192.168.30.0 255.255.255.0", GATEWAY: "192.168.20.254 255.255.255.0", DHCP: FALSE},    
+    VLAN_INFO: {NUMBER: 30, NAME: "WIFI",       IP_ADDRESS: "192.168.88.0 255.255.255.0", GATEWAY: "192.168.88.254 255.255.255.0", DHCP: FALSE},     
+
+    # strings where objects or lists are expected will be treated as variables, i.e., it will be tried as an entry to get the expected object
+
+    #defining "variable"
+    #fields like DESCRIPTION and SHUTDOWN if not specified will take default values of "" and FALSE respectively
+    switchport_access_list: 
+                    [
+                        {IF_NAME: "range fa0/1-5"  ,  VLAN_NUMBER: 10, DESCRIPTION: "", SHUTDOWN: FALSE},
+                        {IF_NAME: "range fa0/6-10" ,  VLAN_NUMBER: 20, DESCRIPTION: "", SHUTDOWN: FALSE},
+                        {IF_NAME: "range fa0/11-15",  VLAN_NUMBER: 30, DESCRIPTION: "", SHUTDOWN: FALSE},
+                        {IF_NAME: "range fa0/16-20",  VLAN_NUMBER: 88, DESCRIPTION: "", SHUTDOWN: FALSE},
+                    ],
+    #defining "variable"
+    switchport_trunk_list:                
+                    [
+                        {IF_NAME: "range fa0/21-24", VLAN_NUM: "all", DESCRIPTION: "", SHUTDOWN: FALSE},
+                        {IF_NAME: "range gig0/1-2", VLAN_NUM: "all" , DESCRIPTION: "", SHUTDOWN: FALSE},
+                    ],  
+    #Here is an example of defining a switch information                            
+    SWITCH_INFO:
+        {
+            NAME: "SW1_MAPUTO",
+            CONFIG: {
+                HOSTNAME: "",
+                #missing fields will be field by DEFAULT_CONFIG
+            },
+            INTERFACES:
+                {
+                    ACCESS: "switchport_access_list",  #will try to find `switchport_access_list` entry to use as value, if error it will fail 
+                    TRUNK: "switchport_trunk_list", #will try to find `switchport_trunk_list` entry to use as value, if error it will fail
+                    VLAN: 
+                    [
+                        {SWITCH_IP: "192.168.10.1", VLAN_NUM: 10}, #adding this switch to the vlan 10
+                    ],
+            },
+        },
+    SWITCH_INFO:
+        {
+            NAME: "SW2",
+            CONFIG: {
+                HOSTNAME: "SW2_MAPUTO",
+                #missing fields will be field by DEFAULT_CONFIG
+            },
+            INTERFACES:
+                {
+                    ACCESS: "switchport_access_list",  #will try to find `switchport_access_list` entry to use as value, if error it will fail 
+                    TRUNK: "switchport_trunk_list", #will try to find `switchport_trunk_list` entry to use as value, if error it will fail
+                    VLAN: 
+                    [
+                        {SWITCH_IP: "192.168.10.2", VLAN_NUM: 10, SHUTDOWN: FALSE}, #adding this switch to the vlan 10
+                    ],
+            }
+        },
+    ROUTER_INFO:
+        {
+            NAME: "SW2",
+            CONFIG: {
+                HOSTNAME: "SW2_MAPUTO",
+                #missing fields will be field by DEFAULT_CONFIG
+            },
+            INTERFACES:
+                {
+                    INTERFACE: {IF_NAME: "gig0/0" , SHUTDOWN: FALSE}
+                    SUBINTERFACE: [
+                        {IF_NAME: "gig0/0.10", ENCAPSULATION: "dot1Q", VLAN_NUMBER: 10  , SHUTDOWN: FALSE},
+                        {IF_NAME: "gig0/0.20", ENCAPSULATION: "dot1Q", VLAN_NUMBER: 20  , SHUTDOWN: FALSE},
+                        {IF_NAME: "gig0/0.30", ENCAPSULATION: "dot1Q", VLAN_NUMBER: 30  , SHUTDOWN: FALSE},
+                        {IF_NAME: "gig0/0.88", ENCAPSULATION: "dot1Q", VLAN_NUMBER: 88  , SHUTDOWN: FALSE},
+                    ]
+                }
+        }
+}
