@@ -4,9 +4,6 @@ from enum import Enum
 from dataclasses import dataclass
 
         
-#def trim_left(str: str):
-#    while(len(str) > 0)
-
 def remove_current_line(str: str) -> str:
     return  str.split('\n', 1)[1]
 
@@ -55,7 +52,8 @@ def lex_configs(config_string: str) -> list[str]:
         config_string = config_string.lstrip()
     return bag
 
-
+#TODO: ADD a function to parse the coniguration file into a list of config_data structures
+#TODO: Generate a config from the parsed file
 
 if __name__ == '__main__':
     with open("test_configuration") as f:
