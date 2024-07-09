@@ -1,21 +1,34 @@
 
-#SPEC -> {} | {ENTRY} |{ENTRY, SPEC}
-#ENTRY -> VLAN_DESC  | SWITCH_INFO_DESC | ROUTER_INFO_DESC | CONFIG_DESC | IF_DESC
+#NOTE 1: The order of items in a comma separated list of <attrib>:<value> is irrelevant
+#NOTE 2: This grammar is still in the specification process.
 
+
+#CONFIGS -> CONFIG_ITEMS |{CONFIG_ITEMS}
+#CONFIG_ITEMS -> ITEM_SPEC, CONFIG_ITEMS | ε
+#ITEM_SPEC -> VLAN_DESC : {NUMBER: <number>, NAME: <word>, [IP_ADDRESS: "<decimal_ip> <decimal_mask>"], [GATEWAY: "<decimal_ip> <decimal_mask>", [DHCP: TRUE|FALSE]]}
+#ITEM_SPEC ->
+#ITEM_NAME -> VLAN_DESC  | SWITCH_INFO_DESC | ROUTER_INFO_DESC | CONFIG_DESC | IF_DESC
+#ITEM_NAME -> 
 #fall back for any unspecified config field in any DEVICE_INFO
 #This is a definition of a simple topology
+
+
+#for defered information we have
+    # item: variable
+    # where variable has the expected value for item
+    # values are quoted, items and variables are not, so if after colon (:) we find an unquoted value it will be treated as a variable of the expected type
 #kinda big I see
 {
     DEFAULT_CONFIG: {
                 HOSTNAME: "",
                 DOMAIN_NAME: "internal_net",
                 PASSWORD: "feuem",
-                MOTD: "Acesso negado",
+                MOTD: "ACESSO NEGADO!!!",
                 LINE_CONSOLE: 0,
                 LINE_VTY: {START: 0, END: 4},
                 ENABLE_SSH: FALSE,
                 #ssh_key_bit: 
-                SSH_PASSWORD: something_like_012345,
+                SSH_PASSWORD: "something_like_012345",
             },
     #specifying all known vlns
     VLAN_INFO: {NUMBER: 10, NAME: "GESTAO",     IP_ADDRESS: "192.168.10.0 255.255.255.0", GATEWAY: "192.168.10.254 255.255.255.0", DHCP: FALSE},
