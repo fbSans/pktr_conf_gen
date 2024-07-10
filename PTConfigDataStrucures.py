@@ -6,6 +6,11 @@ class InetAddress:
     def __init__(self, ip: str, mask: str):
         self.ip = ip
         self.mask: str = mask
+    def __str__(self):
+        return f"InetAddress(ip:{self.ip}, mask:{self.mask})"
+    
+    def __repr__(self):
+        return self.__str__()
 
 class InetAddress4(InetAddress):
     def __init__(self, ipv4: str, mask: str):

@@ -61,8 +61,8 @@ class Keyword(Enum):
     #vlan specific information
     NAME = iota()
     NUMBER = iota()
-    IP_ADDRESS = iota()
-    GATEWAY = iota()
+    NETWORK_ADDRESS = iota()
+    GATEWAY_ADDRESS = iota()
     DHCP = iota()
 
     #device (switch or router) specific information

@@ -123,6 +123,7 @@ def parse_device_config(tokens: list[Token], defered_names: dict) -> tuple[CONFI
                     ]
 
     #start parsing
+    #strinping the header CONFIG | DEFAULT_CONFIG : {
     expect_next_token_type(tokens, [TokenType.KEYWORD])
     expect_next_token_value(tokens, [Keyword.DEFAULT_CONFIG.name.upper(), Keyword.CONFIG.name.upper()])
     config_token , *tokens = tokens
@@ -186,18 +187,81 @@ def parse_device_config(tokens: list[Token], defered_names: dict) -> tuple[CONFI
     tokens = remove_next_comma(tokens)
 
     return config, tokens, defered_names 
+
+def is_ip_v4(str: str) -> bool:
+    parts = str.split('.')
+    if len(parts) != 4: return False
+    for part in parts:
+        if not part.isdigit() and not (0 <= int(part) <= 255): return False
+    return True
+
+#takes a string of the form "xxx.xxx.xxx.xxx xxx.xxx.xxx.xxx" and returns and I
+def parseInetAddress(str: str, location: Location) -> InetAddress:
+    ip, mask, *rest = str.split()
+    if rest != []:
+        print(str)
+        panic(f"{location} The ip string must contain only to parts: the ip address and the mask")
+
+    if is_ip_v4(ip) and is_ip_v4(mask):
+        return InetAddress4(ip, mask)
     
+    #TODO: add support to IPV6
+    panic(f"{location} Invalid IP value: {str}. Note: Only IPv4 is supported")
+     
 
 def parse_vlan(tokens: list[Token], deffered_names: dict) -> tuple[VLAN_INFO, list[Token], dict] :
+    vlan_info = VLAN_INFO(None, None, None, None, None)
     found_items : set = set()
-    vlan_items = [
+    vlan_expected_item_names = [
         Keyword.NAME.name,
         Keyword.NUMBER.name,
-        Keyword.IP_ADDRESS.name,
-        Keyword.GATEWAY.name,
+        Keyword.NETWORK_ADDRESS.name,
+        Keyword.GATEWAY_ADDRESS.name,
         Keyword.DHCP.name,
     ]
-    panic("parse_vlans: not implemented yet")  
+
+    #strinping the header VLAN_INFO : {
+    expect_next_token_type(tokens, [TokenType.KEYWORD])
+    expect_next_token_value(tokens, [Keyword.VLAN_INFO.name])
+    vlan_token, *tokens = tokens
+
+    expect_next_token_type(tokens, [TokenType.COLON])
+    _ , *tokens = tokens
+   
+    expect_next_token_type(tokens, [TokenType.OPEN_CURLY])
+    open_curly , *tokens = tokens
+
+    if len(tokens) == 0: panic(f"{open_curly.location} Unclosed {"}"} in the definition of {vlan_token.value}")
+    while tokens[0].type != TokenType.CLOSE_CURLY:
+        #all vlan_attrib are simple tokens
+        expect_next_token_type(tokens, [TokenType.KEYWORD])
+        key, value, tokens = next_simple_pair(tokens)
+        check_property(vlan_token, key, vlan_expected_item_names, found_items)
+
+        if value.type == TokenType.IDENTIFIER:
+            #TODO: Implement support for identifier names
+            panic(f"{value.location} vlan item as identifier is not suported yet, token is {value.value}")
+        else:
+            match(key.value):
+                case Keyword.NAME.name:
+                    vlan_info.name = value.value
+                case Keyword.NUMBER.name:
+                    #TODO: add a check to see if the number is the vlan range
+                    vlan_info.number = int(value.value) 
+                case Keyword.NETWORK_ADDRESS.name:
+                    vlan_info.network_address = parseInetAddress(value.value, value.location)
+                case Keyword.GATEWAY_ADDRESS.name:
+                    vlan_info.gateway_address = parseInetAddress(value.value, value.location)
+                case Keyword.DHCP.name:
+                    vlan_info.has_dhcp = parse_bool(value.value)
+                case _:
+                    panic("parse_vlans: Unreachable")
+
+    expect_next_token_type(tokens, [TokenType.CLOSE_CURLY])
+    _, *tokens = tokens
+    tokens = remove_next_comma(tokens)
+
+    return vlan_info, tokens, deffered_names  
 
 
 def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # for switches and routers
@@ -206,7 +270,7 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
     # values are quoted, items and variables are not               
     #intems
     deferred_names: dict = dict()
-    vlan_info: dict[str, VLAN_INFO] = dict()   
+    vlan_infos: dict[int, VLAN_INFO] = dict()   
     interfaces: list[INTERFACE_INFO] = []
     device_infos: list[DEVICE_INFO] = []
 
@@ -221,15 +285,18 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
             case TokenType.KEYWORD:
                 match(first_token.value):
                     case Keyword.DEFAULT_CONFIG.name:
+                        if is_default_configuration_parsed: panic(f"{first_token.location} Redefinition of DEFAULT_CONFIG")
                         default_configuration, tokens, deferred_names = parse_device_config(tokens, deferred_names)
+                        is_default_configuration_parsed = True
                     case Keyword.VLAN_INFO.name:
                         vlan, tokens, deferred_names = parse_vlan(tokens, deferred_names)
+                        vlan_infos[vlan.number] = vlan
                     case _:   
                          #debug exit
                         print("*"*40)
                         print(f"default_config: {default_configuration}")
                         print("*"*40)
-                        print(f"Parsed vlans:\n{vlan_info}")
+                        print(f"Parsed vlans:\n{vlan_infos}")
                         print("*"*40)
                         print(f"Parsed devices:\n{device_infos}")
                         print("*"*40)
@@ -237,13 +304,13 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
                         print("*"*40)
                         panic(f"parsing {first_token.value} Not implemented yet")
             case TokenType.IDENTIFIER:
-                panic(f"Parsing {first_token.value} implemented yet")
+                panic(f"{first_token.location} Parsing identifier is not implemented yet: Found {first_token.value}")
             case _ :
                 #debug exit
                 print("*"*40)
                 print(f"default_config: {default_configuration}")
                 print("*"*40)
-                print(f"Parsed vlans:\n{vlan_info}")
+                print(f"Parsed vlans:\n{vlan_infos}")
                 print("*"*40)
                 print(f"Parsed devices:\n{device_infos}")
                 print("*"*40)

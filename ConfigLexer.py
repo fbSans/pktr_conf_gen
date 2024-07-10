@@ -30,7 +30,7 @@ def remove_current_line(str: str) -> str:
 
 
 def next_word(str: str) -> tuple[str, str]:
-    if not (str[0].isalpha() or str[0] == '_'): return ['', str]
+    if not (str[0].isalpha() or str[0] == '_'): return ('', str)
     
     i = 0
     while(i < len(str) and (str[i].isalnum() or str[i] == '_')):  i+=1
