@@ -1,6 +1,7 @@
 from ConfigToken import *
 import sys
 
+
 string_to_tokentype_dict = {
     '{' : TokenType.OPEN_CURLY, 
     '}' : TokenType.CLOSE_CURLY, 
@@ -10,6 +11,7 @@ string_to_tokentype_dict = {
     ']' : TokenType.CLOSE_SQUARE,  
     '.' : TokenType.DOT,
 }
+
 
 # resolves token type for special words. Does not resolve Identifiers or StringLiteral
 def token_type_from_string(str: str):
@@ -22,8 +24,10 @@ def token_type_from_string(str: str):
         return TokenType.INTEGER_LITERAL
     return None  
 
+
 def remove_current_line(str: str) -> str:
     return  str.split('\n', 1)[1]
+
 
 def next_word(str: str) -> tuple[str, str]:
     if not (str[0].isalpha() or str[0] == '_'): return ['', str]
@@ -33,11 +37,13 @@ def next_word(str: str) -> tuple[str, str]:
     if(i == len(str)): return (str, "")
     return (str[:i], str[i:])
 
+
 def next_integer(str: str) -> tuple[str, str]:    
     i = 0
     while(i < len(str) and str[i].isdigit()):  i+=1
     if(i == len(str)): return (str, "")
     return str[:i], str[i:]
+
 
 def next_string(str: str, end: str ='"') -> tuple[str, str]:
     res = str.split(end, 1)

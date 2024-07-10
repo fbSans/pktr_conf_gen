@@ -1,14 +1,18 @@
 from dataclasses import dataclass
 from enum import Enum
 
+
 counter = 0
 def iota():
     global counter 
     counter += 1
     return counter
+
+
 def reset():
     global counter
     counter = 0
+
 
 class TokenType(Enum):
     reset()
@@ -80,6 +84,7 @@ class Location:
     def __str__(self):
         return self.filepath + ':' + str(self.line) + ':' + str(self.column) 
     
+
 class Token:
     def __init__(self, type: TokenType, value : str, location: Location):
         self.type = type

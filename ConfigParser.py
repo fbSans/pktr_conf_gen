@@ -4,6 +4,8 @@ from ConfigToken import *
 from ConfigLexer import *
 
 
+#################################### Helper Functions ################################################################
+
 #used to make assertions uppon token types and/or values. if the provided argument to the parameter value is None, value won't be checked
 def assert_expected_token(actual_token: Token, expected_type: TokenType, expected_value: str = None):
     if expected_value == None:
@@ -12,6 +14,7 @@ def assert_expected_token(actual_token: Token, expected_type: TokenType, expecte
         if not (actual_token.type == expected_type and actual_token.value == expected_value): 
             panic(f"{actual_token.location} Expected token type {expected_type} and value to be {expected_value}, but found token type{actual_token.type.name} and value {actual_token.value}.")
 
+
 #checks the next token type to be in the list of the expected, if not it will panic, it does not alter the tokens list
 def expect_next_token_type(tokens: list[Token], expected_token_types: list[TokenType]):
     if len(tokens) == 0 :
@@ -19,12 +22,14 @@ def expect_next_token_type(tokens: list[Token], expected_token_types: list[Token
     if tokens[0].type not in expected_token_types: 
         panic(f"{tokens[0].location} expected to find token type in {[typ.name for typ in expected_token_types]}, but found {tokens[0].type}")
 
+
 #checks the next token value to be in the list of the expected, if not it will panic, it does not alter the tokens list
 def expect_next_token_value(tokens: list[Token], expected_token_values: list[str]):
     if len(tokens) == 0 :
         panic(f"expected to find token value in {expected_token_values}, but found no more tokens")
     elif tokens[0].value.upper() not in expected_token_values: 
         panic(f"expected to find token type in {expected_token_values}, but found {tokens[0].value}")
+
 
 #removes the next comma in  the token list. if there is no comma it will fail, unless it finds an empty list, or closing tokens like }, ], ) 
 def remove_next_comma(tokens: list[Token]) -> list[Token]:
@@ -43,7 +48,6 @@ def check_property(parsee_object: Token, property: Token, expected_property_name
     already_found_properties.add(property.value)
    
 
-
 #here simple pair means that the value is a string literal or an identifier, removes the comma in the end if it exists
 def next_simple_pair(tokens: list[Token]) -> tuple[Token, Token, list[Token]]:
     expect_next_token_type(tokens, [TokenType.KEYWORD, TokenType.IDENTIFIER])
@@ -57,6 +61,9 @@ def next_simple_pair(tokens: list[Token]) -> tuple[Token, Token, list[Token]]:
     tokens = remove_next_comma(tokens)
     
     return key, value, tokens
+
+
+############################################## Generating Functions ##################################################
     
 #parses line_vty from the list of tokens
 def parse_line_vty(tokens: list[Token]) -> tuple[int, int, list[Token]]:
@@ -192,6 +199,7 @@ def parse_vlan(tokens: list[Token], deffered_names: dict) -> tuple[VLAN_INFO, li
     ]
     panic("parse_vlans: not implemented yet")  
 
+
 def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # for switches and routers
     #for defered information we have: item, variable
     # where variable has the expected value for item
@@ -242,6 +250,7 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
                 print(f"Parsed defered_info:\n{deferred_names}")
                 print("*"*40)
                 panic(f"Parsing for  {tokens[0].type} is not implemented yet")
+
 
 #TODO: Generate a config from the parsed file
 if __name__ == '__main__':
