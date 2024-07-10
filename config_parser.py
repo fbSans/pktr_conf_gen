@@ -226,6 +226,13 @@ def expect_next_token_value(tokens: list[Token], expected_token_values: list[str
     elif tokens[0].value.upper() not in expected_token_values: 
         panic(f"expected to find token type in {expected_token_values}, but found {tokens[0].value}")
 
+#removes the next comma in  the token list. if there is no comma it will fail, unless it finds an empty list, or closing tokens like }, ], ) 
+def remove_next_comma(tokens: list[Token]) -> list[Token]:
+    if len(tokens) > 0:
+        expect_next_token_type(tokens, [TokenType.COMMA, TokenType.CLOSE_CURLY, TokenType.CLOSE_SQUARE, TokenType.CLOSE_PAREN])
+        if tokens[0].type == TokenType.COMMA: _, *tokens = tokens
+    return tokens
+
 #here simple pair means that the value is a string literal or an identifier, removes the comma in the end if it exists
 def next_simple_pair(tokens: list[Token]) -> tuple[Token, Token, list[Token]]:
     expect_next_token_type(tokens, [TokenType.KEYWORD, TokenType.IDENTIFIER])
@@ -236,14 +243,10 @@ def next_simple_pair(tokens: list[Token]) -> tuple[Token, Token, list[Token]]:
     if(tokens[0].type == TokenType.KEYWORD): expect_next_token_value(tokens, [KeyWord.TRUE.name, KeyWord.FALSE.name])
     value, *tokens = tokens
     
-    if len(tokens) > 0:
-        expect_next_token_type(tokens, [TokenType.COMMA, TokenType.CLOSE_CURLY, TokenType.CLOSE_SQUARE, TokenType.CLOSE_PAREN])
-        if tokens[0].type == TokenType.COMMA: _, *tokens = tokens
+    tokens = remove_next_comma(tokens)
     
     return key, value, tokens
     
-config_items = [KeyWord.DEFAULT_CONFIG.name, KeyWord.HOSTNAME.name, KeyWord.DOMAIN_NAME.name, KeyWord.PASSWORD.name, KeyWord.MOTD.name, KeyWord.LINE_CONSOLE.name, KeyWord.LINE_VTY.name, KeyWord.ENABLE_SSH.name , KeyWord.SSH_PASSWORD.name]
-
 #parses line_vty from the list of tokens
 def parse_line_vty(tokens: list[Token]) -> tuple[int, int, list[Token]]:
     found_items: set = set()
@@ -273,9 +276,7 @@ def parse_line_vty(tokens: list[Token]) -> tuple[int, int, list[Token]]:
     expect_next_token_type(tokens, [TokenType.CLOSE_CURLY])
     _, *tokens = tokens
 
-    if len(tokens) > 0:
-        expect_next_token_type(tokens, [TokenType.COMMA, TokenType.CLOSE_CURLY, TokenType.CLOSE_SQUARE, TokenType.CLOSE_PAREN])
-        if tokens[0].type == TokenType.COMMA: _, *tokens = tokens 
+    tokens = remove_next_comma(tokens) 
 
     return start, end, tokens
 
@@ -292,7 +293,9 @@ def parse_bool(str: str):
 def parse_device_config(tokens: list[Token], defered_items: list) -> tuple[CONFIG_INFO, list[Token]]:
     found_items : set = set()
     config: CONFIG_INFO = CONFIG_INFO()
+    config_items = [KeyWord.DEFAULT_CONFIG.name, KeyWord.HOSTNAME.name, KeyWord.DOMAIN_NAME.name, KeyWord.PASSWORD.name, KeyWord.MOTD.name, KeyWord.LINE_CONSOLE.name, KeyWord.LINE_VTY.name, KeyWord.ENABLE_SSH.name , KeyWord.SSH_PASSWORD.name]
 
+    #start parsing
     expect_next_token_type(tokens, [TokenType.KEYWORD])
     expect_next_token_value(tokens, [KeyWord.DEFAULT_CONFIG.name.upper(), KeyWord.CONFIG.name.upper()])
     config_token , *tokens = tokens
@@ -356,6 +359,8 @@ def parse_device_config(tokens: list[Token], defered_items: list) -> tuple[CONFI
 
     expect_next_token_type(tokens, [TokenType.CLOSE_CURLY])
     _, *tokens = tokens
+    tokens = remove_next_comma(tokens)
+
     return config, tokens 
     
     
