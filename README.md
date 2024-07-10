@@ -1,3 +1,5 @@
+# TODO: Revise this README.md after the first usable version of the config generator
+
 # Not Serious Packet Tracer Configuration Generator
 ## **About The config_gen.py:**
     This is a simple [script](./config_gen.py) with prints to its output stream packet trace configurations for the devices (routers or switches) that are provided. [add more details]
