@@ -202,6 +202,8 @@ def lex_config_from_file(filepath: str) -> list[Token]:
 
     return tokens
 
+
+
 #used to make assertions uppon token types and/or values. if the provided argument to the parameter value is None, value won't be checked
 def assert_expected_token(actual_token: Token, expected_type: TokenType, expected_value: str = None):
     if expected_value == None:
@@ -257,6 +259,7 @@ def parse_line_vty(tokens: list[Token]) -> tuple[int, int, list[Token]]:
     for _ in range(2):
         key, value, tokens = next_simple_pair(tokens)
         assert_expected_token(key, TokenType.KEYWORD)
+        expect_next_token_value([key], [KeyWord.START.name, KeyWord.END.name]) 
         if key in found_items: panic(f"{key.location} Redefinition of property {key.name} while defining property {KeyWord.LINE_VTY.name}")
         match key.value:
             case KeyWord.START.name:
@@ -265,7 +268,7 @@ def parse_line_vty(tokens: list[Token]) -> tuple[int, int, list[Token]]:
                 end = int(value.value)
             case _:
                 #make it fail on porpose to report with the default message
-                expect_next_token_value([key], [KeyWord.START.name, KeyWord.END.name]) 
+                assert False, "parse_line_vty: Unreachable"
 
     expect_next_token_type(tokens, [TokenType.CLOSE_CURLY])
     _, *tokens = tokens
