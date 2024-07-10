@@ -1,5 +1,5 @@
 # TODO not implemented 
-from config_data_structures import *
+from PTConfigDataStrucures import *
 from ConfigToken import *
 from ConfigLexer import *
 
