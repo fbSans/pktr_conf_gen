@@ -111,6 +111,7 @@ def parse_bool(str: str):
 def parse_device_config(tokens: list[Token], defered_names: dict) -> tuple[CONFIG_INFO, list[Token], dict]:
     found_items : set[str] = set()
     config: CONFIG_INFO = CONFIG_INFO()
+    constants: dict
     config_expected_item_names = [
                         Keyword.HOSTNAME.name, 
                         Keyword.DOMAIN_NAME.name, 
