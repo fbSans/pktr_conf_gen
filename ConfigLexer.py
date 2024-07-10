@@ -1,4 +1,4 @@
-from Token import *
+from ConfigToken import *
 import sys
 
 string_to_tokentype_dict = {

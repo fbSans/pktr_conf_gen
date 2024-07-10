@@ -1,7 +1,7 @@
 # TODO not implemented 
 from config_data_structures import *
-from Token import *
-from Lexer import *
+from ConfigToken import *
+from ConfigLexer import *
 
 
 #used to make assertions uppon token types and/or values. if the provided argument to the parameter value is None, value won't be checked
