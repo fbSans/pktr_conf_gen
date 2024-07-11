@@ -63,11 +63,11 @@
             },
             INTERFACES:
                 {
-                    ACCESS: "switchport_access_list",  #will try to find `switchport_access_list` entry to use as value, if error it will fail 
-                    TRUNK: "switchport_trunk_list", #will try to find `switchport_trunk_list` entry to use as value, if error it will fail
+                    ACCESS: switchport_access_list,  #will try to find `switchport_access_list` entry to use as value, if error it will fail 
+                    TRUNK: switchport_trunk_list, #will try to find `switchport_trunk_list` entry to use as value, if error it will fail
                     VLAN: 
                     [
-                        {SWITCH_IP: "192.168.10.1", VLAN_NUM: 10}, #adding this switch to the vlan 10
+                        {SWITCH_IP: "192.168.10.1 255.255.255.0", VLAN_NUM: 10}, #adding this switch to the vlan 10
                     ],
             },
         },
@@ -78,14 +78,13 @@
                 HOSTNAME: "SW2_MAPUTO",
                 #missing fields will be field by DEFAULT_CONFIG
             },
-            INTERFACES:
-                {
-                    ACCESS: "switchport_access_list",  #will try to find `switchport_access_list` entry to use as value, if error it will fail 
-                    TRUNK: "switchport_trunk_list", #will try to find `switchport_trunk_list` entry to use as value, if error it will fail
+            INTERFACES: {
+                    ACCESS: switchport_access_list,  #will try to find `switchport_access_list` entry to use as value, if error it will fail 
+                    TRUNK: switchport_trunk_list, #will try to find `switchport_trunk_list` entry to use as value, if error it will fail
                     VLAN: 
                     [
                         {SWITCH_IP: "192.168.10.2", VLAN_NUM: 10, SHUTDOWN: FALSE}, #adding this switch to the vlan 10
-                    ],
+                    ],  
             }
         },
     ROUTER_INFO:
@@ -97,7 +96,7 @@
             },
             INTERFACES:
                 {
-                    INTERFACE: {IF_NAME: "gig0/0" , SHUTDOWN: FALSE}
+                    INTERFACE: {IF_NAME: "gig0/0" , SHUTDOWN: FALSE},
                     SUBINTERFACE: [
                         {IF_NAME: "gig0/0.10", ENCAPSULATION: "dot1Q", VLAN_NUMBER: 10  , SHUTDOWN: FALSE},
                         {IF_NAME: "gig0/0.20", ENCAPSULATION: "dot1Q", VLAN_NUMBER: 20  , SHUTDOWN: FALSE},

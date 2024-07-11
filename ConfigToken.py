@@ -65,6 +65,11 @@ class Keyword(Enum):
     GATEWAY_ADDRESS = iota()
     DHCP = iota()
 
+    #interface type specific information:
+    ACCESS = iota()
+    TRUNK = iota()
+    VLAN = iota()
+    
     #device (switch or router) specific information
     IF_NAME = iota()
     VLAN_NUMBER = iota()

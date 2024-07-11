@@ -111,7 +111,6 @@ def parse_bool(str: str):
 def parse_device_config(tokens: list[Token], defered_names: dict) -> tuple[CONFIG_INFO, list[Token], dict]:
     found_items : set[str] = set()
     config: CONFIG_INFO = CONFIG_INFO()
-    constants: dict
     config_expected_item_names = [
                         Keyword.HOSTNAME.name, 
                         Keyword.DOMAIN_NAME.name, 
@@ -173,7 +172,7 @@ def parse_device_config(tokens: list[Token], defered_names: dict) -> tuple[CONFI
                 case Keyword.LINE_CONSOLE.name:
                     config.line_console = int(value.value)
                 case Keyword.LINE_VTY.name:
-                    panic(f"{key.location} unreachable")
+                    panic(f"parse_device_config: {key.location} unreachable")
                 case Keyword.ENABLE_SSH.name:
                     config.enable_ssh = parse_bool(value.value)
                 case Keyword.SSH_PASSWORD.name:
@@ -210,7 +209,7 @@ def parseInetAddress(str: str, location: Location) -> InetAddress:
     panic(f"{location} Invalid IP value: {str}. Note: Only IPv4 is supported")
      
 
-def parse_vlan(tokens: list[Token], deffered_names: dict) -> tuple[VLAN_INFO, list[Token], dict] :
+def parse_vlan_info(tokens: list[Token], deffered_names: dict) -> tuple[VLAN_INFO, list[Token], dict] :
     vlan_info = VLAN_INFO(None, None, None, None, None)
     found_items : set = set()
     vlan_expected_item_names = [
@@ -265,6 +264,192 @@ def parse_vlan(tokens: list[Token], deffered_names: dict) -> tuple[VLAN_INFO, li
     return vlan_info, tokens, deffered_names  
 
 
+def parse_dict(tokens: list[Token], deferred_names: dict):
+    res = dict()
+    expect_next_token_type(tokens, [TokenType.OPEN_CURLY])
+    open_curly_token, *tokens = tokens
+
+    if len(tokens) == 0: panic(f"{open_curly_token.location} Unclosed {"{"}")
+    while tokens[0].type != TokenType.CLOSE_CURLY:
+        expect_next_token_type(tokens, [TokenType.KEYWORD, TokenType.IDENTIFIER])
+        key, *tokens = tokens
+        expect_next_token_type(tokens, [TokenType.COLON])
+        _, *tokens = tokens
+
+        current_token = tokens[0]
+        match current_token.type:
+            case TokenType.STRING_LITERAL | TokenType.INTEGER_LITERAL :
+                res[key.value] = current_token.value
+                _, *tokens = tokens
+                tokens = remove_next_comma(tokens)
+            case TokenType.OPEN_CURLY:
+                res_dict, tokens, deferred_names = parse_dict(tokens, deferred_names)
+                res[key.value] = res_dict
+            case TokenType.OPEN_SQUARE:
+                res_list, tokens, deferred_names = parse_list(tokens, deferred_names)
+                res[key.value] = res_list
+            case TokenType.KEYWORD:
+                expect_next_token_value(tokens, [Keyword.TRUE.name, Keyword.FALSE.name])
+                res[key.value] = current_token.value
+                _, *tokens = tokens
+                tokens = remove_next_comma(tokens)
+            case _:
+                panic(f"{current_token.location} Unsupported dictionary value {current_token.value}")
+        if len(tokens) == 0: panic(f"{open_curly_token.location} Unclosed {"{"}")
+        
+    expect_next_token_type(tokens, [TokenType.CLOSE_CURLY])
+    _, *tokens = tokens
+    tokens = remove_next_comma(tokens)
+    return res, tokens, deferred_names
+    
+
+def parse_list(tokens: list[Token], deferred_names: dict):
+    res = []
+    expect_next_token_type(tokens, [TokenType.OPEN_SQUARE])
+    open_square_token, *tokens = tokens
+
+    if len(tokens) == 0: panic(f"{open_square_token.location} Unclosed [")
+    while tokens[0].type != TokenType.CLOSE_SQUARE:
+        #parse content
+        current_token = tokens[0]
+        match current_token.type:
+            case TokenType.STRING_LITERAL | TokenType.STRING_LITERAL :
+                res.append(current_token.value)
+                _, *tokens = tokens
+                tokens = remove_next_comma(tokens)
+            case TokenType.OPEN_CURLY:
+                res_dict, tokens , deferred_names = parse_dict(tokens, deferred_names)
+                res.append(res_dict)
+            case TokenType.OPEN_SQUARE:
+                res_list, tokens, deferred_names = parse_list(tokens, deferred_names)
+                res.append(res_list)
+            case TokenType.KEYWORD:
+                expect_next_token_value[Keyword.TRUE.name, Keyword.FALSE.name]
+                res.append(current_token.value)
+                _, *tokens = tokens
+                tokens = remove_next_comma(tokens)
+            case _:
+                panic(f"{current_token.location}Unsupported list value {current_token.value}")
+        if len(tokens) == 0: panic(f"{open_square_token.location} Unclosed ]")
+
+    expect_next_token_type(tokens, [TokenType.CLOSE_SQUARE])
+    _, *tokens = tokens
+    tokens = remove_next_comma(tokens)
+    return res, tokens, deferred_names
+
+def parse_interfaces(tokens: list[Token], deferred_names: dict) -> tuple[INTERFACE_INFO, list[Token], dict]:
+    interfaces: list[INTERFACE_INFO] = []
+    found_items : set = set()
+    interfaces_expected_item_names = [
+        Keyword.ACCESS.name,  
+        Keyword.TRUNK.name,  
+        Keyword.VLAN.name  
+    ]
+
+    #strinping the header INTERFACES:{
+    expect_next_token_type(tokens, [TokenType.KEYWORD])
+    expect_next_token_value(tokens, [Keyword.INTERFACES.name])
+    interfaces_token, *tokens = tokens
+
+    expect_next_token_type(tokens, [TokenType.COLON])
+    _ , *tokens = tokens
+   
+    expect_next_token_type(tokens, [TokenType.OPEN_CURLY])
+    open_curly , *tokens = tokens
+
+    if len(tokens) == 0: panic(f"{open_curly.location} Unclosed {"}"} in the definition of {interfaces_token.value}")
+    while tokens[0].type != TokenType.CLOSE_CURLY:
+        if len(tokens) < 3: panic(f"{tokens[0].location} incomplete specification of switch item")
+        expect_next_token_type(tokens, [TokenType.KEYWORD])
+        check_property(interfaces_token, tokens[0], interfaces_expected_item_names, found_items)
+        expect_next_token_type(tokens[1:], [TokenType.COLON])
+        next_value_token = tokens[2]
+        key = tokens[0]
+        if next_value_token.type == TokenType.IDENTIFIER:
+            #TODO: Implement support for identifier names
+            panic(f"{next_value_token.location} interfaces item as identifier is not suported yet, token is {next_value_token.value}")
+        else: 
+            expect_next_token_type(tokens[2:], [TokenType.OPEN_SQUARE])
+            match(key.value):
+                case Keyword.ACCESS.name:
+                    panic("parse_interfaces: parsing access interfaces is not implemented yet")
+                case Keyword.TRUNK.name:
+                    panic("parse_interfaces: parsing trunk interfaces is implemented yet")
+                case Keyword.VLAN.name:
+                    panic("parse_interfaces: parsing vlan interfaces is not implemented yet")
+                case _:     
+                    panic("parse_interfaces: unreachable")
+
+        if len(tokens) == 0: panic(f"{open_curly.location} Unclosed {"}"} in the definition of {interfaces_token.value}")
+
+    expect_next_token_type(tokens, [TokenType.CLOSE_CURLY])
+    _, *tokens = tokens
+    tokens = remove_next_comma(tokens)
+
+    return interfaces, tokens, deferred_names
+    panic("parse_interfaces: Not implemented yet")
+
+    
+def parse_switch_info(tokens: list[Token], deferred_names: dict) -> tuple[list[Token], dict]:
+    switch_name: str = None,
+    switch_config: CONFIG_INFO = CONFIG_INFO()
+    switch_iterfaces: list = []
+    found_items: set[str] = set()
+    switch_expected_item_names = [
+        Keyword.NAME.name,
+        Keyword.CONFIG.name,
+        Keyword.INTERFACES.name,
+    ]
+
+    #strinping the header SWITCH_INFO : {
+    expect_next_token_type(tokens, [TokenType.KEYWORD])
+    expect_next_token_value(tokens, [Keyword.SWITCH_INFO.name])
+    switch_token, *tokens = tokens
+
+    expect_next_token_type(tokens, [TokenType.COLON])
+    _ , *tokens = tokens
+   
+    expect_next_token_type(tokens, [TokenType.OPEN_CURLY])
+    open_curly , *tokens = tokens
+
+    #parse the body of SWITCH
+    if len(tokens) == 0: panic(f"{open_curly.location} Unclosed {"}"} in the definition of {switch_token.value}")
+    while tokens[0].type != TokenType.CLOSE_CURLY:
+        if len(tokens) < 3: panic(f"{tokens[0].location} incomplete specification of switch item")
+        expect_next_token_type(tokens, [TokenType.KEYWORD])
+        check_property(switch_token, tokens[0], switch_expected_item_names, found_items)
+        expect_next_token_type(tokens[1:], [TokenType.COLON])
+        next_value_token = tokens[2]
+        key = tokens[0]
+        if next_value_token.type == TokenType.IDENTIFIER:
+            #TODO: Implement support for identifier names
+            panic(f"{next_value_token.location} vlan item as identifier is not suported yet, token is {next_value_token.value}")
+        else:  
+            match(key.value):
+                case Keyword.NAME.name:
+                    expect_next_token_type(tokens[2:], [TokenType.STRING_LITERAL])
+                    _, _, name_token, *tokens = tokens  # first two are item_name and colon (:)
+                    switch_name = name_token.value
+                    tokens = remove_next_comma(tokens)  
+                case Keyword.CONFIG.name:
+                    switch_config, tokens, deferred_names = parse_device_config(tokens, deferred_names)
+                case Keyword.INTERFACES.name:
+                    switch_iterface, tokens, deferred_names = parse_interfaces(tokens, deferred_names)
+                    switch_iterfaces.append(switch_iterface)
+                case _:
+                    panic("parse_interfaces: Unreachable location")
+                    pass
+
+        if len(tokens) == 0: panic(f"{open_curly.location} Unclosed {"}"} in the definition of {switch_token.value}")
+
+    expect_next_token_type(tokens, [TokenType.CLOSE_CURLY])
+    _, *tokens = tokens
+    tokens = remove_next_comma(tokens)
+
+    switch_info = SWITCH_INFO(switch_name, switch_config, switch_iterfaces)
+    return switch_info, tokens, deferred_names
+    
+
 def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # for switches and routers
     #for defered information we have: item, variable
     # where variable has the expected value for item
@@ -274,6 +459,7 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
     vlan_infos: dict[int, VLAN_INFO] = dict()   
     interfaces: list[INTERFACE_INFO] = []
     device_infos: list[DEVICE_INFO] = []
+    constants: dict[str, list|dict] = dict()
 
     default_configuration: CONFIG_INFO = None    #will be filled with information comming for default configuration if defined in the config file
     #flags:
@@ -290,8 +476,11 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
                         default_configuration, tokens, deferred_names = parse_device_config(tokens, deferred_names)
                         is_default_configuration_parsed = True
                     case Keyword.VLAN_INFO.name:
-                        vlan, tokens, deferred_names = parse_vlan(tokens, deferred_names)
+                        vlan, tokens, deferred_names = parse_vlan_info(tokens, deferred_names)
                         vlan_infos[vlan.number] = vlan
+                    case Keyword.SWITCH_INFO.name:
+                        switch_info, tokens, deferred_names = parse_switch_info(tokens, deferred_names)
+                        device_infos.append(switch_info)
                     case _:   
                          #debug exit
                         print("*"*40)
@@ -303,9 +492,25 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
                         print("*"*40)
                         print(f"Parsed defered_info:\n{deferred_names}")
                         print("*"*40)
+                        print(f"Parsed constants:\n{constants}")
+                        print("*"*40)
                         panic(f"parsing {first_token.value} Not implemented yet")
             case TokenType.IDENTIFIER:
-                panic(f"{first_token.location} Parsing identifier is not implemented yet: Found {first_token.value}")
+                indetifier_token, *tokens = tokens
+                expect_next_token_type(tokens, [TokenType.COLON])
+                _, *tokens = tokens
+                expect_next_token_type(tokens, [TokenType.OPEN_CURLY, TokenType.OPEN_SQUARE])
+                opening_token = tokens[0]
+
+                match opening_token.type:
+                    case TokenType.OPEN_CURLY:
+                       content, tokens, deferred_names = parse_dict(tokens, deferred_names) 
+                       constants[indetifier_token.value] = content
+                    case TokenType.OPEN_SQUARE:
+                        content, tokens, deferred_names = parse_list(tokens, deferred_names)
+                        constants[indetifier_token.value] = content
+                    case _:
+                        panic(f"parse_config: Unreachable")
             case _ :
                 #debug exit
                 print("*"*40)
@@ -316,6 +521,8 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
                 print(f"Parsed devices:\n{device_infos}")
                 print("*"*40)
                 print(f"Parsed defered_info:\n{deferred_names}")
+                print("*"*40)
+                print(f"Parsed constants:\n{constants}")
                 print("*"*40)
                 panic(f"Parsing for  {tokens[0].type} is not implemented yet")
 
