@@ -108,7 +108,7 @@ def parse_bool(str: str):
             panic(f"{str} cannot be converted into boolean")
 
 
-def parse_device_config(tokens: list[Token], variables: dict) -> tuple[CONFIG_INFO, list[Token], dict]:
+def parse_device_config(tokens: list[Token], variables: dict[str,int|str|list|dict]) -> tuple[CONFIG_INFO, list[Token], dict[str,int|str|list|dict]]:
     found_items : set[str] = set()
     config: CONFIG_INFO = CONFIG_INFO()
     config_expected_item_names = [
@@ -209,7 +209,7 @@ def parseInetAddress(str: str, location: Location) -> InetAddress:
     panic(f"{location} Invalid IP value: {str}. Note: Only IPv4 is supported")
      
 
-def parse_vlan_info(tokens: list[Token], deffered_names: dict) -> tuple[VLAN_INFO, list[Token], dict] :
+def parse_vlan_info(tokens: list[Token], variables: dict[str,int|str|list|dict]) -> tuple[VLAN_INFO, list[Token], dict[str,int|str|list|dict]] :
     vlan_info = VLAN_INFO(None, None, None, None, None)
     found_items : set = set()
     vlan_expected_item_names = [
@@ -261,10 +261,10 @@ def parse_vlan_info(tokens: list[Token], deffered_names: dict) -> tuple[VLAN_INF
     _, *tokens = tokens
     tokens = remove_next_comma(tokens)
 
-    return vlan_info, tokens, deffered_names  
+    return vlan_info, tokens, variables  
 
 
-def parse_dict(tokens: list[Token], variables: dict):
+def parse_dict(tokens: list[Token], variables: dict[str,int|str|list|dict]) -> tuple[dict[str,int|str|list|dict], list[Token], dict[str,int|str|list|dict]]:
     res = dict()
     expect_next_token_type(tokens, [TokenType.OPEN_CURLY])
     open_curly_token, *tokens = tokens
@@ -303,7 +303,7 @@ def parse_dict(tokens: list[Token], variables: dict):
     return res, tokens, variables
     
 
-def parse_list(tokens: list[Token], variables: dict):
+def parse_list(tokens: list[Token], variables: dict[str,int|str|list|dict]) -> tuple[list[int|str|list|dict], list[Token], dict[str,int|str|list|dict]]:
     res = []
     expect_next_token_type(tokens, [TokenType.OPEN_SQUARE])
     open_square_token, *tokens = tokens
@@ -338,7 +338,7 @@ def parse_list(tokens: list[Token], variables: dict):
     return res, tokens, variables
 
 
-def parse_interfaces(tokens: list[Token], variables: dict) -> tuple[INTERFACE_INFO, list[Token], dict]:
+def parse_interfaces(tokens: list[Token], variables: dict[str,int|str|list|dict]) -> tuple[INTERFACE_INFO, list[Token], dict[str,int|str|list|dict]]:
     interfaces: list[INTERFACE_INFO] = []
     found_items : set = set()
     interfaces_expected_item_names = [
@@ -402,7 +402,7 @@ def parse_interfaces(tokens: list[Token], variables: dict) -> tuple[INTERFACE_IN
     
 
     
-def parse_switch_info(tokens: list[Token], variables: dict) -> tuple[list[Token], dict]:
+def parse_switch_info(tokens: list[Token], variables: dict[str,int|str|list|dict]) -> tuple[list[Token], dict[str,int|str|list|dict], dict[str,int|str|list|dict]]:
     switch_name: str = None,
     switch_config: CONFIG_INFO = CONFIG_INFO()
     switch_iterfaces: list = []
@@ -471,7 +471,7 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
     vlan_infos: dict[int, VLAN_INFO] = dict()   
     interfaces: list[INTERFACE_INFO] = []
     device_infos: list[DEVICE_INFO] = []
-    variables: dict[str, list|dict] = dict()
+    variables: dict[str,int|str|list|dict] = dict()
 
     default_configuration: CONFIG_INFO = None    #will be filled with information comming for default configuration if defined in the config file
     #flags:
