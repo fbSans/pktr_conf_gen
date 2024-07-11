@@ -110,7 +110,7 @@ def parse_bool(str: str):
 
 def parse_device_config(tokens: list[Token], variables: dict[str,int|str|list|dict]) -> tuple[CONFIG_INFO, list[Token], dict[str,int|str|list|dict]]:
     found_items : set[str] = set()
-    config: CONFIG_INFO = CONFIG_INFO()
+
     config_expected_item_names = [
                         Keyword.HOSTNAME.name, 
                         Keyword.DOMAIN_NAME.name, 
@@ -134,6 +134,14 @@ def parse_device_config(tokens: list[Token], variables: dict[str,int|str|list|di
     expect_next_token_type(tokens, [TokenType.OPEN_CURLY])
     open_curly , *tokens = tokens
    
+
+    #non-default config will have its fieds initialized with None
+    #The fields that are not changed to a not None value will recieve the DEFAULT_CONFIG fields
+    if config_token.value != Keyword.DEFAULT_CONFIG.name:
+        config = CONFIG_INFO(None, None, None, None, None, None, None, None)
+    else:
+        config = CONFIG_INFO() # DEFAULT_CONFIG is initialized with reasanable values
+
     #lack of do while loop ;)
     if len(tokens) == 0: panic(f"{open_curly.location} Unclosed {"}"} in the definition of {config_token.name}")
     while tokens[0].type != TokenType.CLOSE_CURLY:
@@ -554,7 +562,6 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
     #intems
     variables: dict = dict()
     vlan_infos: dict[int, VLAN_INFO] = dict()   
-    interfaces: list[INTERFACE_INFO] = []
     device_infos: list[DEVICE_INFO] = []
     variables: dict[str,int|str|list|dict] = dict()
 
@@ -618,6 +625,18 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
                 print(f"Parsed constants:\n{variables}")
                 print("*"*40)
                 panic(f"Parsing for  {tokens[0].type} is not implemented yet")
+
+    #Second Pass. 
+    #Unspecified Device config values, that were initialized with None in the first pass (Note: not the 'None' string), will be filled with information of device config
+    for device_info in device_infos:
+        if device_info.config_info is None: device_info = CONFIG_INFO() #If somehow config IF was not specified in the configuration file
+        if device_info.config_info.domain_name is None: device_info.config_info.domain_name = default_configuration.domain_name
+        if device_info.config_info.enable_ssh is None: device_info.config_info.domain_name = default_configuration.enable_ssh
+        if device_info.config_info.hostname is None: device_info.config_info.domain_name = default_configuration.hostname
+        if device_info.config_info.line_console is None: device_info.config_info.domain_name = default_configuration.line_console
+        if device_info.config_info.motd is None: device_info.config_info.domain_name = default_configuration.motd
+        if device_info.config_info.password is None: device_info.config_info.domain_name = default_configuration.password
+        if device_info.config_info.ssh_password is None: device_info.config_info.domain_name = default_configuration.ssh_password
 
 
 #TODO: Generate a config from the parsed file
