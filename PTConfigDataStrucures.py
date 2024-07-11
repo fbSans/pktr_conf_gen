@@ -46,7 +46,14 @@ class INTERFACE_INFO(ABC):
         else:config_if += "no shutdown\n"
         config_if +="exit\n\n"
         print(config_if, file=file, end='')
+
+    def __str__(self):
+        vlan = self.vlan
+        if self.vlan is None: vlan = "''"
+        return f"SWITCHPORT(name: {self.name}, vlan: {vlan}, shutdown: {self.description}, description: {self.description})"
     
+    def __repr__(self) -> str:
+        return self.__str__()
 
 class SWITCHPORT_ACCESS_INFO(INTERFACE_INFO):
     def __init__(self, name: str, vlan: VLAN_INFO, description: str = "" , shutdown : bool = False):
@@ -62,7 +69,7 @@ class SWITCHPORT_ACCESS_INFO(INTERFACE_INFO):
     
 
 class SWITCHPORT_TRUNCK_INFO(INTERFACE_INFO):
-    def __init__(self, name: str, description: str, shutdown: bool = False):
+    def __init__(self, name: str, description: str = "", shutdown: bool = False):
         super().__init__(name, None, description, shutdown)
 
     def generate_config_if(self, file=sys.stdout):
@@ -73,7 +80,7 @@ class SWITCHPORT_TRUNCK_INFO(INTERFACE_INFO):
         super().generate_config_if(file)
 
 class INTERFACE_VLAN_INFO(INTERFACE_INFO):
-    def __init__(self, vlan: VLAN_INFO, description: str, shutdown=False):
+    def __init__(self, vlan: VLAN_INFO, description: str = "", shutdown=False):
         super().__init__("", vlan, description, shutdown) 
 
     def generate_config_if(self, file=sys.stdout):
@@ -173,6 +180,12 @@ class DEVICE_INFO(ABC):
         print("configuration terminal\n", file=file)
         self.generate_basic_config(file)
         pass
+
+    def __str__(self) -> str:
+        return f"DEVICE_INFO(name: {self.name}, config: {self.config_info}, interfaces: {self.interfaces})"
+    
+    def __repr__(self) -> str:
+        return self.__str__()
 
 class SWITCH_INFO (DEVICE_INFO):
     def __init__(self, name: str, config_info: CONFIG_INFO, interfaces: list[SWITCHPORT_ACCESS_INFO | SWITCHPORT_TRUNCK_INFO | INTERFACE_VLAN_INFO]):

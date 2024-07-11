@@ -337,8 +337,75 @@ def parse_list(tokens: list[Token], variables: dict[str,int|str|list|dict]) -> t
     tokens = remove_next_comma(tokens)
     return res, tokens, variables
 
+def parse_switchport_access_from_dict(items: dict[int|str|list|dict], vlan_infos: list[VLAN_INFO], location: Location) -> SWITCHPORT_ACCESS_INFO:
+    switch_port_info = SWITCHPORT_ACCESS_INFO(None, None)
+    found_items: set[str] = set()
 
-def parse_interfaces(tokens: list[Token], variables: dict[str,int|str|list|dict]) -> tuple[INTERFACE_INFO, list[Token], dict[str,int|str|list|dict]]:
+    for item_name, item_value in items.items():
+        if item_name in found_items: panic(f"{location} Redefinition of property {item_name}")
+        found_items.add(item_name)
+        match(item_name):
+            case Keyword.IF_NAME.name:
+                switch_port_info.name = item_value
+            case Keyword.VLAN_NUMBER.name:
+                switch_port_info.vlan = vlan_infos[int(item_value)]
+            case Keyword.DESCRIPTION.name:
+                switch_port_info.description = item_value
+            case Keyword.SHUTDOWN.name:
+                switch_port_info.shutdown = parse_bool(item_value)
+            case _:
+                panic(f"{location} Unexpected ACCESS item: {item_value}")
+
+    return switch_port_info
+
+def parse_switchport_trunk_from_dict(items: dict[int|str|list|dict], vlan_infos: list[VLAN_INFO], location: Location) -> SWITCHPORT_ACCESS_INFO:
+    switch_port_info = SWITCHPORT_TRUNCK_INFO(None)
+    found_items: set[str] = set()
+
+    for item_name, item_value in items.items():
+        if item_name in found_items: panic(f"{location} Redefinition of property {item_name}")
+        found_items.add(item_name)
+        match(item_name):
+            case Keyword.IF_NAME.name:
+                switch_port_info.name = item_value
+            case Keyword.DESCRIPTION.name:
+                switch_port_info.description = item_value
+            case Keyword.SHUTDOWN.name:
+                switch_port_info.shutdown = parse_bool(item_value)
+            case _:
+                panic(f"{location} Unexpected TRUNK item: {item_value}")
+
+    return switch_port_info
+
+def parse_switchport_vlan_from_dict(items: dict[int|str|list|dict], vlan_infos: list[VLAN_INFO], location: Location) -> SWITCHPORT_ACCESS_INFO:
+    switch_port_info = INTERFACE_VLAN_INFO(None)
+    found_items: set[str] = set()
+    interface_ip: InetAddress = None 
+    for item_name, item_value in items.items():
+        if item_name in found_items: panic(f"{location} Redefinition of property {item_name}")
+        found_items.add(item_name)
+        print(item_name)
+        match(item_name):
+            case Keyword.SWITCH_IP.name:
+                interface_ip = parseInetAddress(item_value, location)
+            case Keyword.VLAN_NUMBER.name:
+                switch_port_info.vlan = vlan_infos[int(item_value)]
+            case Keyword.DESCRIPTION.name:
+                switch_port_info.description = item_value
+            case Keyword.SHUTDOWN.name:
+                switch_port_info.shutdown = parse_bool(item_value)
+            case _:
+                panic(f"{location} Unexpected VLAN item: {item_name}")
+        
+    if interface_ip is None: panic(f"{location} SWITCH_IP was not specified for INTERFACE VLAN")
+    if switch_port_info.vlan is None: panic(f"{location} VLAN_NUMBER was not specified for INTERFACE VLAN")
+        
+    switch_port_info.vlan.network_address = interface_ip
+       
+    return switch_port_info
+        
+
+def parse_interfaces(tokens: list[Token], variables: dict[str,int|str|list|dict], vlan_infos: list[VLAN_INFO]) -> tuple[INTERFACE_INFO, list[Token], dict[str,int|str|list|dict]]:
     interfaces: list[INTERFACE_INFO] = []
     found_items : set = set()
     interfaces_expected_item_names = [
@@ -360,35 +427,54 @@ def parse_interfaces(tokens: list[Token], variables: dict[str,int|str|list|dict]
 
     if len(tokens) == 0: panic(f"{open_curly.location} Unclosed {"}"} in the definition of {interfaces_token.value}")
     while tokens[0].type != TokenType.CLOSE_CURLY:
+        
         if len(tokens) < 3: panic(f"{tokens[0].location} incomplete specification of switch item")
         expect_next_token_type(tokens, [TokenType.KEYWORD])
         check_property(interfaces_token, tokens[0], interfaces_expected_item_names, found_items)
         expect_next_token_type(tokens[1:], [TokenType.COLON])
         next_value_token = tokens[2]
         key = tokens[0]
+       
         if next_value_token.type == TokenType.IDENTIFIER:
             _, _, _, *tokens = tokens
             interface_type_name = key.value
             variable_name = next_value_token.value
+            variable_value = variables[variable_name]
+
+            if not isinstance(variable_value, list): panic(f"{key.location} Expected variable to be a list")    
             match(interface_type_name):
                 case Keyword.ACCESS.name:
-                    panic("parse_interfaces: parsing access interfaces is not implemented yet")
+                    for dct in variable_value:
+                        if not isinstance(dct, dict): panic(f"{key.location} Expected variable list items to be dictionaries")
+                        interfaces.append(parse_switchport_access_from_dict(dct, vlan_infos, key.location))
                 case Keyword.TRUNK.name:
-                    panic("parse_interfaces: parsing trunk interfaces is implemented yet")
+                    for dct in variable_value:
+                        if not isinstance(dct, dict): panic(f"{key.location} Expected variable list items to be dictionaries")
+                        interfaces.append(parse_switchport_trunk_from_dict(dct, vlan_infos, key.location))
                 case Keyword.VLAN.name:
-                    panic("parse_interfaces: parsing vlan interfaces is not implemented yet")
+                    panic("parse_interfaces: parsing vlan interfaces from identifiers is not implemented yet")
                 case _:     
-                    panic("parse_interfaces: unreachable")               
-            panic(f"{next_value_token.location} interfaces item as identifier is not suported yet, token is {next_value_token.value}")
+                    panic("parse_interfaces: unreachable") 
+            tokens = remove_next_comma(tokens)         
         else: 
             expect_next_token_type(tokens[2:], [TokenType.OPEN_SQUARE])
+            _, _, *tokens = tokens
             match(key.value):
                 case Keyword.ACCESS.name:
-                    panic("parse_interfaces: parsing access interfaces is not implemented yet")
+                    item_list, tokens, variables = parse_list(tokens, variables)
+                    for dct in item_list:
+                        if not isinstance(dct, dict): panic(f"{key.location} Expected variable list items to be dictionaries")
+                        interfaces.append(parse_switchport_access_from_dict(dct, vlan_infos, key.location))
                 case Keyword.TRUNK.name:
-                    panic("parse_interfaces: parsing trunk interfaces is implemented yet")
+                    item_list, tokens, variables = parse_list(tokens, variables)
+                    for dct in item_list:
+                        if not isinstance(dct, dict): panic(f"{key.location} Expected variable list items to be dictionaries")
+                        interfaces.append(parse_switchport_trunk_from_dict(dct, vlan_infos, key.location))
                 case Keyword.VLAN.name:
-                    panic("parse_interfaces: parsing vlan interfaces is not implemented yet")
+                    item_list, tokens, variables = parse_list(tokens, variables)
+                    for dct in item_list:
+                        if not isinstance(dct, dict): panic(f"{key.location} Expected variable list items to be dictionaries")
+                        interfaces.append(parse_switchport_vlan_from_dict(dct, vlan_infos, key.location))
                 case _:     
                     panic("parse_interfaces: unreachable")
 
@@ -402,10 +488,10 @@ def parse_interfaces(tokens: list[Token], variables: dict[str,int|str|list|dict]
     
 
     
-def parse_switch_info(tokens: list[Token], variables: dict[str,int|str|list|dict]) -> tuple[list[Token], dict[str,int|str|list|dict], dict[str,int|str|list|dict]]:
+def parse_switch_info(tokens: list[Token], variables: dict[str,int|str|list|dict], vlan_infos: list[VLAN_INFO]) -> tuple[list[Token], dict[str,int|str|list|dict], dict[str,int|str|list|dict]]:
     switch_name: str = None,
     switch_config: CONFIG_INFO = CONFIG_INFO()
-    switch_iterfaces: list = []
+    switch_iterfaces: list[INTERFACE_INFO] = []
     found_items: set[str] = set()
     switch_expected_item_names = [
         Keyword.NAME.name,
@@ -446,8 +532,7 @@ def parse_switch_info(tokens: list[Token], variables: dict[str,int|str|list|dict
                 case Keyword.CONFIG.name:
                     switch_config, tokens, variables = parse_device_config(tokens, variables)
                 case Keyword.INTERFACES.name:
-                    switch_iterface, tokens, variables = parse_interfaces(tokens, variables)
-                    switch_iterfaces.append(switch_iterface)
+                    switch_iterfaces, tokens, variables = parse_interfaces(tokens, variables, vlan_infos)
                 case _:
                     panic("parse_interfaces: Unreachable location")
                     pass
@@ -491,7 +576,7 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
                         vlan, tokens, variables = parse_vlan_info(tokens, variables)
                         vlan_infos[vlan.number] = vlan
                     case Keyword.SWITCH_INFO.name:
-                        switch_info, tokens, variables = parse_switch_info(tokens, variables)
+                        switch_info, tokens, variables = parse_switch_info(tokens, variables, vlan_infos)
                         device_infos.append(switch_info)
                     case _:   
                          #debug exit

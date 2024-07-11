@@ -69,10 +69,11 @@ class Keyword(Enum):
     ACCESS = iota()
     TRUNK = iota()
     VLAN = iota()
-    
+
     #device (switch or router) specific information
     IF_NAME = iota()
     VLAN_NUMBER = iota()
+    SWITCH_IP = iota()
     DESCRIPTION = iota()
     SHUTDOWN = iota()
     INTERFACE = iota()
