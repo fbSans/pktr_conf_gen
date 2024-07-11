@@ -459,7 +459,7 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
     vlan_infos: dict[int, VLAN_INFO] = dict()   
     interfaces: list[INTERFACE_INFO] = []
     device_infos: list[DEVICE_INFO] = []
-    constants: dict[str, list|dict] = dict()
+    variables: dict[str, list|dict] = dict()
 
     default_configuration: CONFIG_INFO = None    #will be filled with information comming for default configuration if defined in the config file
     #flags:
@@ -492,7 +492,7 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
                         print("*"*40)
                         print(f"Parsed defered_info:\n{deferred_names}")
                         print("*"*40)
-                        print(f"Parsed constants:\n{constants}")
+                        print(f"Parsed constants:\n{variables}")
                         print("*"*40)
                         panic(f"parsing {first_token.value} Not implemented yet")
             case TokenType.IDENTIFIER:
@@ -505,10 +505,10 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
                 match opening_token.type:
                     case TokenType.OPEN_CURLY:
                        content, tokens, deferred_names = parse_dict(tokens, deferred_names) 
-                       constants[indetifier_token.value] = content
+                       variables[indetifier_token.value] = content
                     case TokenType.OPEN_SQUARE:
                         content, tokens, deferred_names = parse_list(tokens, deferred_names)
-                        constants[indetifier_token.value] = content
+                        variables[indetifier_token.value] = content
                     case _:
                         panic(f"parse_config: Unreachable")
             case _ :
@@ -522,7 +522,7 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
                 print("*"*40)
                 print(f"Parsed defered_info:\n{deferred_names}")
                 print("*"*40)
-                print(f"Parsed constants:\n{constants}")
+                print(f"Parsed constants:\n{variables}")
                 print("*"*40)
                 panic(f"Parsing for  {tokens[0].type} is not implemented yet")
 
