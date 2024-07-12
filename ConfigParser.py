@@ -717,17 +717,17 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
                         router_info, tokens, variables = parse_router_info(tokens, variables, vlan_infos)
                         device_infos.append(router_info)
                     case _:   
-                         #debug exit
-                        print("*"*40)
-                        print(f"default_config: {default_configuration}")
-                        print("*"*40)
-                        print(f"Parsed vlans:\n{vlan_infos}")
-                        print("*"*40)
-                        print(f"Parsed devices:\n{device_infos}")
-                        print("*"*40)
-                        print(f"Parsed variables{variables}")
-                        print("*"*40)
-                        panic(f"parsing {first_token.value} Not implemented yet")
+                        #debug exit
+                        # print("*"*40)
+                        # print(f"default_config: {default_configuration}")
+                        # print("*"*40)
+                        # print(f"Parsed vlans:\n{vlan_infos}")
+                        # print("*"*40)
+                        # print(f"Parsed devices:\n{device_infos}")
+                        # print("*"*40)
+                        # print(f"Parsed variables{variables}")
+                        # print("*"*40)
+                        panic(f"{first_token.location} {first_token.value} keyword is not expected at the top level")
             case TokenType.IDENTIFIER:
                 indetifier_token, *tokens = tokens
                 expect_next_token_type(tokens, [TokenType.COLON])
@@ -746,16 +746,16 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
                         panic(f"parse_config: Unreachable")
             case _ :
                 #debug exit
-                print("*"*40)
-                print(f"default_config: {default_configuration}")
-                print("*"*40)
-                print(f"Parsed vlans:\n{vlan_infos}")
-                print("*"*40)
-                print(f"Parsed devices:\n{device_infos}")
-                print("*"*40)
-                print(f"Parsed constants:\n{variables}")
-                print("*"*40)
-                panic(f"Parsing for  {tokens[0].type} is not implemented yet")
+                # print("*"*40)
+                # print(f"default_config: {default_configuration}")
+                # print("*"*40)
+                # print(f"Parsed vlans:\n{vlan_infos}")
+                # print("*"*40)
+                # print(f"Parsed devices:\n{device_infos}")
+                # print("*"*40)
+                # print(f"Parsed constants:\n{variables}")
+                # print("*"*40)
+                panic(f"{tokens[0].location} Expected a keyword or identifier but found {tokens[0].type} is not implemented yet")
 
     #Second Pass. 
     #Unspecified Device config values, that were initialized with None in the first pass (Note: not the 'None' string), will be filled with information of device config
