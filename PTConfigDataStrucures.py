@@ -252,34 +252,3 @@ def generate_config(file = sys.stdout, devices: list[SWITCH_INFO | ROUTER_INFO] 
         device.generate_config(file)
         print("", file=file)
     print("", file=file)
-
-
-# if __name__ == '__main__':
-#     file=sys.stdout
-#     default_confg = CONFIG_INFO(
-#         hostname="RMaputo", 
-#         domain_name="homenet", 
-#         password="feuem", 
-#         motd="Acesso restrito !!!",
-#         line_console= 0, 
-#         line_vty=(1, 4), 
-#         enable_ssh=True, 
-#         ssh_password='uma senha de confianca, confia'
-#     )
-
-#     net10 = InetAddress4("192.168.10.0", "255.255.255.0")
-#     getway10 = InetAddress4("192.168.10.254", "255.255.255.0")
-#     vlan_10 = VLAN_INFO(name="clientes", number=10, network_address=net10, gateway_address=getway10, has_dhcp=True)
-   
-#     fa_interface = ROUTER_INTERFACE_INFO(name='FastEthernet 0/0', vlan=vlan_10, description="Interface do gateway da vlan10", shutdown=False, clockrate=64000)
-#     router_info = ROUTER_INFO("R1", default_confg, [fa_interface])
-#     router_info.generate_config(file)
-
-#     print("", file=file)
-#     default_confg.hostname = "SMaputo"
-#     sw_fa_interface_range = SWITCHPORT_ACCESS_INFO(name="range FastEthernet0/1-5", vlan=vlan_10, description="interface de acesso para vlan 10", shutdown=False)
-#     vlan_10_1 = vlan_10
-#     vlan_10_1.network_address.ip = "192.168.10.1"
-#     interface_vlan10 = INTERFACE_VLAN_INFO(vlan_10, "", False)
-#     switch_info = SWITCH_INFO("S1", default_confg, [interface_vlan10, sw_fa_interface_range])
-#     switch_info.generate_config(file)
