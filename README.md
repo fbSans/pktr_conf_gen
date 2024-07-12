@@ -1,15 +1,13 @@
-# TODO: Revise this README.md after the first usable version of the config generator
+# Packet Tracer device configuration generator.
 
-# Not Serious Packet Tracer Configuration Generator
-## **About The config_gen.py:**
-    This is a simple [script](./config_gen.py) with prints to its output stream packet trace configurations for the devices (routers or switches) that are provided. [add more details]
+## Porpuse
+    Its a simple utility made with the intent of speeding the configuration of devices in homeworks
 
-## Validation
-    it will not try to make any sort of validation for the information you pass for names, addresses or masks. It is left for the user to pass the appropriate validations if needed.
-
-## **Dealing with interfaces**
-    This implementation does not care with the names you pass for the interfaces. So here are some tricks to generate some special interfaces
-### Interface range
-        1. For example to make configuration for **interface range FastEthernet 0/0-10** you pass the corresponding `INTERFACE_INFO` with name **range FastEthernet 0/0-10**.
+## How to use:
+    1- Have a file with configuration description similar to [The example file](test_configuration)
+    2- Go to the command line use:
+        ```gen_ios_config.py <input file> [<output file>]```
+    
+    Then you can copy and paste generated information in you packet tracer switch
 
 

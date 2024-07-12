@@ -771,8 +771,10 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
         if device_info.config_info.ssh_password is None: device_info.config_info.ssh_password = default_configuration.ssh_password
 
     return device_infos
-#TODO: Generate a config from the parsed file
-if __name__ == '__main__':
-    tokens = lex_config_from_file("test_configuration")
-    generate_config(devices=parse_config(tokens))
-    
+
+def parse_config_file(config_file_path: str) -> list[DEVICE_INFO]:
+    with open(config_file_path) as f:
+        tokens = lex_config_from_file(config_file_path)
+        if len(tokens) == 0: print("Empty configuration input file")
+        devices = parse_config(tokens)
+    return devices

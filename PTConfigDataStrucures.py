@@ -176,7 +176,7 @@ class DEVICE_INFO(ABC):
     
     @abstractmethod
     def generate_config(self, file= sys.stdout):
-        print("#" * 50, file=file)
+        print("#" * 80, file=file)
         print(f"# Configuration for {self.name}\n\n", file=file, end='')
         print("configuration terminal\n", file=file)
         self.generate_basic_config(file)
@@ -199,7 +199,7 @@ class SWITCH_INFO (DEVICE_INFO):
         return super().generate_config_if(file)
     
     def generate_config(self, file = sys.stdout):        
-        super().generate_config()
+        super().generate_config(file)
         
         #specific for switches
         #announce vlans
@@ -247,11 +247,11 @@ class ROUTER_INFO (DEVICE_INFO):
 def generate_config(file = sys.stdout, devices: list[SWITCH_INFO | ROUTER_INFO] = []):
     for device in devices:
 
-        print("*"*80)
-        print(f"Generating config for {device.name}")
+        print("#"*80, file=file)
+        print(f"Generating config for {device.name}", file=file)
         device.generate_config(file)
-        print()
-    print()
+        print("", file=file)
+    print("", file=file)
 
 
 # if __name__ == '__main__':
