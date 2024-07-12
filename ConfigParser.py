@@ -149,44 +149,45 @@ def parse_device_config(tokens: list[Token], variables: dict[str,int|str|list|di
         if tokens[0].type == TokenType.KEYWORD and tokens[0].value == Keyword.LINE_VTY.name:
             start, end, tokens = parse_line_vty(tokens)
             config.line_vty = start, end
-        #to parse simple values
-        expect_next_token_type(tokens, [TokenType.KEYWORD])
-        key, value, tokens = next_simple_pair(tokens)
-    
-        check_property(config_token, key, config_expected_item_names, found_items)
-
-        if value.type == TokenType.IDENTIFIER:
-            #TODO: Implement support for identifier names
-            panic(f"{value.location} Config item as identifier is not suported yet, token is {value.value}")
         else:
-            #if condition is not true, it is a string literal
-            if key.value in [Keyword.ENABLE_SSH.name]:
-                assert_expected_token(value, TokenType.KEYWORD)
-                expect_next_token_value([value], [Keyword.TRUE.name.upper(), Keyword.FALSE.name.upper()])
-            elif key.value in [Keyword.LINE_CONSOLE.name]:
-                assert_expected_token(value, TokenType.INTEGER_LITERAL)
+            #to parse simple values
+            expect_next_token_type(tokens, [TokenType.KEYWORD])
+            key, value, tokens = next_simple_pair(tokens)
+        
+            check_property(config_token, key, config_expected_item_names, found_items)
+
+            if value.type == TokenType.IDENTIFIER:
+                #TODO: Implement support for identifier names
+                panic(f"{value.location} Config item as identifier is not suported yet, token is {value.value}")
             else:
-                assert_expected_token(value, TokenType.STRING_LITERAL)
-                
-            match key.value.upper():
-                case Keyword.HOSTNAME.name:
-                    config.hostname = value.value
-                case Keyword.DOMAIN_NAME.name:
-                    config.domain_name = value.value
-                case Keyword.PASSWORD.name:
-                    config.password = value.value
-                case Keyword.MOTD.name:
-                    config.motd = value.value
-                case Keyword.LINE_CONSOLE.name:
-                    config.line_console = int(value.value)
-                case Keyword.LINE_VTY.name:
-                    panic(f"parse_device_config: {key.location} unreachable")
-                case Keyword.ENABLE_SSH.name:
-                    config.enable_ssh = parse_bool(value.value)
-                case Keyword.SSH_PASSWORD.name:
-                    config.ssh_password = value.value
-                case _:
-                    panic(f"Unreachable. But somehow got here with key value {key.value}")
+                #if condition is not true, it is a string literal
+                if key.value in [Keyword.ENABLE_SSH.name]:
+                    assert_expected_token(value, TokenType.KEYWORD)
+                    expect_next_token_value([value], [Keyword.TRUE.name.upper(), Keyword.FALSE.name.upper()])
+                elif key.value in [Keyword.LINE_CONSOLE.name]:
+                    assert_expected_token(value, TokenType.INTEGER_LITERAL)
+                else:
+                    assert_expected_token(value, TokenType.STRING_LITERAL)
+                    
+                match key.value.upper():
+                    case Keyword.HOSTNAME.name:
+                        config.hostname = value.value
+                    case Keyword.DOMAIN_NAME.name:
+                        config.domain_name = value.value
+                    case Keyword.PASSWORD.name:
+                        config.password = value.value
+                    case Keyword.MOTD.name:
+                        config.motd = value.value
+                    case Keyword.LINE_CONSOLE.name:
+                        config.line_console = int(value.value)
+                    case Keyword.LINE_VTY.name:
+                        panic(f"parse_device_config: {key.location} unreachable")
+                    case Keyword.ENABLE_SSH.name:
+                        config.enable_ssh = parse_bool(value.value)
+                    case Keyword.SSH_PASSWORD.name:
+                        config.ssh_password = value.value
+                    case _:
+                        panic(f"Unreachable. But somehow got here with key value {key.value}")
 
         if len(tokens) == 0: panic(f"{open_curly.location} Unclosed {"}"} in the definition of {config_token.name}")
 
