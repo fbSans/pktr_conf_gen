@@ -89,9 +89,9 @@
         },
     ROUTER_INFO:
         {
-            NAME: "SW2",
+            NAME: "R1",
             CONFIG: {
-                HOSTNAME: "SW2_MAPUTO",
+                HOSTNAME: "ROUTER_MAPUTO",
                 #missing fields will be field by DEFAULT_CONFIG
             },
             INTERFACES:
