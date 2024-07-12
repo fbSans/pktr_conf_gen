@@ -96,7 +96,7 @@
             },
             INTERFACES:
                 {
-                    INTERFACE: {IF_NAME: "gig0/0" , SHUTDOWN: FALSE},
+                    INTERFACE: [{IF_NAME: "gig0/0" , SHUTDOWN: FALSE}],
                     SUBINTERFACE: [
                         {IF_NAME: "gig0/0.10", ENCAPSULATION: "dot1Q", VLAN_NUMBER: 10  , SHUTDOWN: FALSE},
                         {IF_NAME: "gig0/0.20", ENCAPSULATION: "dot1Q", VLAN_NUMBER: 20  , SHUTDOWN: FALSE},

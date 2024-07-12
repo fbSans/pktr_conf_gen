@@ -74,9 +74,12 @@ class Keyword(Enum):
     IF_NAME = iota()
     VLAN_NUMBER = iota()
     SWITCH_IP = iota()
+    CLOCK_RATE = iota()
     DESCRIPTION = iota()
+    ENCAPSULATION = iota()
     SHUTDOWN = iota()
     INTERFACE = iota()
+    SUBINTERFACE = iota()
     INTERFACES = iota()
     reset()
 

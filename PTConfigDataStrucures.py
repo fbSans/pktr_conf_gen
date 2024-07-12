@@ -95,6 +95,7 @@ class ROUTER_INTERFACE_INFO(INTERFACE_INFO):
         self.clockrate = clockrate
         
     def generate_config_if(self, file=sys.stdout):
+        config_if = ""
         if self.vlan is not None:
             config_if = f"interface {self.name}\n"
             config_if += f"ip address {self.vlan.gateway_address.ip} {self.vlan.gateway_address.mask}\n"
@@ -176,7 +177,7 @@ class DEVICE_INFO(ABC):
     @abstractmethod
     def generate_config(self, file= sys.stdout):
         print("#" * 50, file=file)
-        print(f"# Configuracao para {self.name}\n\n", file=file, end='')
+        print(f"# Configuration for {self.name}\n\n", file=file, end='')
         print("configuration terminal\n", file=file)
         self.generate_basic_config(file)
         pass
@@ -244,7 +245,13 @@ class ROUTER_INFO (DEVICE_INFO):
 
     
 def generate_config(file = sys.stdout, devices: list[SWITCH_INFO | ROUTER_INFO] = []):
-    pass
+    for device in devices:
+
+        print("*"*80)
+        print(f"Generating config for {device.name}")
+        device.generate_config(file)
+        print()
+    print()
 
 
 # if __name__ == '__main__':

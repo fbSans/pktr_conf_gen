@@ -207,7 +207,6 @@ def is_ip_v4(str: str) -> bool:
 def parseInetAddress(str: str, location: Location) -> InetAddress:
     ip, mask, *rest = str.split()
     if rest != []:
-        print(str)
         panic(f"{location} The ip string must contain only to parts: the ip address and the mask")
 
     if is_ip_v4(ip) and is_ip_v4(mask):
@@ -392,7 +391,6 @@ def parse_switchport_vlan_from_dict(items: dict[int|str|list|dict], vlan_infos: 
     for item_name, item_value in items.items():
         if item_name in found_items: panic(f"{location} Redefinition of property {item_name}")
         found_items.add(item_name)
-        print(item_name)
         match(item_name):
             case Keyword.SWITCH_IP.name:
                 interface_ip = parseInetAddress(item_value, location)
@@ -413,13 +411,65 @@ def parse_switchport_vlan_from_dict(items: dict[int|str|list|dict], vlan_infos: 
     return switch_port_info
         
 
+def parse_router_interface_from_dict(items: dict[str, int|str|list|dict], vlan_infos: list[VLAN_INFO], location: Location):
+    router_interface_info = ROUTER_INTERFACE_INFO(None, None, "", True, None)
+    found_items: set[str] = set()
+
+    for item_name, item_value in items.items():
+        if item_name in found_items: panic(f"{location} Redefinition of property {item_name}")
+        found_items.add(item_name)
+        match(item_name):
+            case Keyword.IF_NAME.name:
+                router_interface_info.name = item_value
+            case Keyword.VLAN_NUMBER.name:
+                router_interface_info.vlan = vlan_infos[int(item_value)]
+            case Keyword.DESCRIPTION.name:
+                router_interface_info.description = item_value
+            case Keyword.SHUTDOWN.name:
+                router_interface_info.shutdown = parse_bool(item_value)
+            case Keyword.CLOCK_RATE.name:
+                if item_value != '': router_interface_info.clockrate = None
+                router_interface_info.clockrate = int(item_value)
+            case _:
+                panic(f"{location} Unexpected ROUTER INTERFACE item: {item_value}")
+
+    return router_interface_info
+
+def parse_router_subinterface_from_dict(items: dict[str, int|str|list|dict], vlan_infos: list[VLAN_INFO], location: Location):
+    router_subinterface_info = ROUTER_SUBINTERFACE_INFO(None, None, None, "dot1Q", False)
+    found_items: set[str] = set()
+
+    for item_name, item_value in items.items():
+        if item_name in found_items: panic(f"{location} Redefinition of property {item_name}")
+        found_items.add(item_name)
+        match(item_name):
+            case Keyword.IF_NAME.name:
+                router_subinterface_info.name = item_value
+            case Keyword.VLAN_NUMBER.name:
+                router_subinterface_info.vlan = vlan_infos[int(item_value)]
+            case Keyword.DESCRIPTION.name:
+                router_subinterface_info.description = item_value
+            case Keyword.SHUTDOWN.name:
+                router_subinterface_info.shutdown = parse_bool(item_value)
+            case Keyword.ENCAPSULATION.name:
+                router_subinterface_info.encapsulation = item_value
+            case _:
+                panic(f"{location} Unexpected ROUTER INTERFACE item: {item_value}")
+
+    return router_subinterface_info
+    
+
+
 def parse_interfaces(tokens: list[Token], variables: dict[str,int|str|list|dict], vlan_infos: list[VLAN_INFO]) -> tuple[INTERFACE_INFO, list[Token], dict[str,int|str|list|dict]]:
+    #TODO: make so that one of the parameters is interfaces_expected_items
     interfaces: list[INTERFACE_INFO] = []
     found_items : set = set()
     interfaces_expected_item_names = [
         Keyword.ACCESS.name,  
         Keyword.TRUNK.name,  
-        Keyword.VLAN.name  
+        Keyword.VLAN.name, 
+        Keyword.INTERFACE.name,
+        Keyword.SUBINTERFACE.name, 
     ]
 
     #strinping the header INTERFACES:{
@@ -460,7 +510,17 @@ def parse_interfaces(tokens: list[Token], variables: dict[str,int|str|list|dict]
                         if not isinstance(dct, dict): panic(f"{key.location} Expected variable list items to be dictionaries")
                         interfaces.append(parse_switchport_trunk_from_dict(dct, vlan_infos, key.location))
                 case Keyword.VLAN.name:
-                    panic("parse_interfaces: parsing vlan interfaces from identifiers is not implemented yet")
+                    for dct in variable_value:
+                        if not isinstance(dct, dict): panic(f"{key.location} Expected variable list items to be dictionaries")
+                        interfaces.append(parse_switchport_vlan_from_dict(dct, vlan_infos, key.location))
+                case Keyword.INTERFACE.name:
+                    for dct in variable_value:
+                        if not isinstance(dct, dict): panic(f"{key.location} Expected variable list items to be dictionaries")
+                        interfaces.append(parse_router_interface_from_dict(dct, vlan_infos, key.location))   
+                case Keyword.INTERFACE.name:
+                    for dct in variable_value:
+                        if not isinstance(dct, dict): panic(f"{key.location} Expected variable list items to be dictionaries")
+                        interfaces.append(parse_router_subinterface_from_dict(dct, vlan_infos, key.location))         
                 case _:     
                     panic("parse_interfaces: unreachable") 
             tokens = remove_next_comma(tokens)         
@@ -483,6 +543,16 @@ def parse_interfaces(tokens: list[Token], variables: dict[str,int|str|list|dict]
                     for dct in item_list:
                         if not isinstance(dct, dict): panic(f"{key.location} Expected variable list items to be dictionaries")
                         interfaces.append(parse_switchport_vlan_from_dict(dct, vlan_infos, key.location))
+                case Keyword.INTERFACE.name:
+                    item_list, tokens, variables = parse_list(tokens, variables)
+                    for dct in item_list:
+                        if not isinstance(dct, dict): panic(f"{key.location} Expected variable list items to be dictionaries")
+                        interfaces.append(parse_router_interface_from_dict(dct, vlan_infos, key.location))
+                case Keyword.SUBINTERFACE.name:
+                    item_list, tokens, variables = parse_list(tokens, variables)
+                    for dct in item_list:
+                        if not isinstance(dct, dict): panic(f"{key.location} Expected variable list items to be dictionaries")
+                        interfaces.append(parse_router_subinterface_from_dict(dct, vlan_infos, key.location))
                 case _:     
                     panic("parse_interfaces: unreachable")
 
@@ -555,6 +625,64 @@ def parse_switch_info(tokens: list[Token], variables: dict[str,int|str|list|dict
     return switch_info, tokens, variables
     
 
+def parse_router_info(tokens: list[Token], variables: dict[str, int|str|list|dict], vlan_infos: dict[int, VLAN_INFO] ) -> tuple[ROUTER_INFO, list[Token], dict[str, int|str|list|dict]]:
+        router_name: str = None,
+        router_config: CONFIG_INFO = CONFIG_INFO()
+        router_iterfaces: list[INTERFACE_INFO] = []
+        found_items: set[str] = set()
+        router_expected_item_names = [
+            Keyword.NAME.name,
+            Keyword.CONFIG.name,
+            Keyword.INTERFACES.name,
+        ]
+
+        #strinping the header SWITCH_INFO : {
+        expect_next_token_type(tokens, [TokenType.KEYWORD])
+        expect_next_token_value(tokens, [Keyword.ROUTER_INFO.name])
+        router_token, *tokens = tokens
+
+        expect_next_token_type(tokens, [TokenType.COLON])
+        _ , *tokens = tokens
+    
+        expect_next_token_type(tokens, [TokenType.OPEN_CURLY])
+        open_curly , *tokens = tokens
+
+        #parse the body of SWITCH
+        if len(tokens) == 0: panic(f"{open_curly.location} Unclosed {"}"} in the definition of {router_token.value}")
+        while tokens[0].type != TokenType.CLOSE_CURLY:
+            if len(tokens) < 3: panic(f"{tokens[0].location} incomplete specification of router item")
+            expect_next_token_type(tokens, [TokenType.KEYWORD])
+            check_property(router_token, tokens[0], router_expected_item_names, found_items)
+            expect_next_token_type(tokens[1:], [TokenType.COLON])
+            next_value_token = tokens[2]
+            key = tokens[0]
+            if next_value_token.type == TokenType.IDENTIFIER:
+                panic(f"{next_value_token.location} vlan item as identifier is not suported yet, token is {next_value_token.value}")
+            else:  
+                match(key.value):
+                    case Keyword.NAME.name:
+                        expect_next_token_type(tokens[2:], [TokenType.STRING_LITERAL])
+                        _, _, name_token, *tokens = tokens  # first two are item_name and colon (:)
+                        router_name = name_token.value
+                        tokens = remove_next_comma(tokens)  
+                    case Keyword.CONFIG.name:
+                        router_config, tokens, variables = parse_device_config(tokens, variables)
+                    case Keyword.INTERFACES.name:
+                        router_iterfaces, tokens, variables = parse_interfaces(tokens, variables, vlan_infos)
+                    case _:
+                        panic("parse_interfaces: Unreachable location")
+                        pass
+
+            if len(tokens) == 0: panic(f"{open_curly.location} Unclosed {"}"} in the definition of {router_token.value}")
+
+        expect_next_token_type(tokens, [TokenType.CLOSE_CURLY])
+        _, *tokens = tokens
+        tokens = remove_next_comma(tokens)
+
+        router_info = ROUTER_INFO(router_name, router_config, router_iterfaces)
+        return router_info, tokens, variables
+
+
 def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # for switches and routers
     #for defered information we have: item, variable
     # where variable has the expected value for item
@@ -585,6 +713,9 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
                     case Keyword.SWITCH_INFO.name:
                         switch_info, tokens, variables = parse_switch_info(tokens, variables, vlan_infos)
                         device_infos.append(switch_info)
+                    case Keyword.ROUTER_INFO.name:
+                        router_info, tokens, variables = parse_router_info(tokens, variables, vlan_infos)
+                        device_infos.append(router_info)
                     case _:   
                          #debug exit
                         print("*"*40)
@@ -631,16 +762,17 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
     for device_info in device_infos:
         if device_info.config_info is None: device_info = CONFIG_INFO() #If somehow config IF was not specified in the configuration file
         if device_info.config_info.domain_name is None: device_info.config_info.domain_name = default_configuration.domain_name
-        if device_info.config_info.enable_ssh is None: device_info.config_info.domain_name = default_configuration.enable_ssh
-        if device_info.config_info.hostname is None: device_info.config_info.domain_name = default_configuration.hostname
-        if device_info.config_info.line_console is None: device_info.config_info.domain_name = default_configuration.line_console
-        if device_info.config_info.motd is None: device_info.config_info.domain_name = default_configuration.motd
-        if device_info.config_info.password is None: device_info.config_info.domain_name = default_configuration.password
-        if device_info.config_info.ssh_password is None: device_info.config_info.domain_name = default_configuration.ssh_password
+        if device_info.config_info.enable_ssh is None: device_info.config_info.enable_ssh = default_configuration.enable_ssh
+        if device_info.config_info.hostname is None: device_info.config_info.hostname = default_configuration.hostname
+        if device_info.config_info.line_console is None: device_info.config_info.line_console = default_configuration.line_console
+        if device_info.config_info.line_vty is None: device_info.config_info.line_vty= default_configuration.line_vty
+        if device_info.config_info.motd is None: device_info.config_info.motd = default_configuration.motd
+        if device_info.config_info.password is None: device_info.config_info.password = default_configuration.password
+        if device_info.config_info.ssh_password is None: device_info.config_info.ssh_password = default_configuration.ssh_password
 
-
+    return device_infos
 #TODO: Generate a config from the parsed file
 if __name__ == '__main__':
     tokens = lex_config_from_file("test_configuration")
-    print(parse_config(tokens))
+    generate_config(devices=parse_config(tokens))
     
