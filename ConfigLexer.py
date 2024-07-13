@@ -64,7 +64,6 @@ def lex_config_from_string(config_string: str, row: int, filepath: str) -> list[
     while(len(config_string) > 0):
         token_type: TokenType = TokenType.UNKNOWN 
         token_value: str = '' 
-        #print(bag)
         match config_string[0] :
             case '#':
                 config_string = remove_current_line(config_string)
@@ -96,7 +95,6 @@ def lex_config_from_string(config_string: str, row: int, filepath: str) -> list[
     return tokens
 
 
-#TODO: ADD a function to parse the coniguration file into a list of config_data structures
 
 #opens a config file, parses its content into tokens of the type Token and returns them into a list
 def lex_config_from_file(filepath: str) -> list[Token]:
