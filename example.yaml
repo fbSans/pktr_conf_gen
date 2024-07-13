@@ -1,6 +1,6 @@
 
 #NOTE 1: The order of items in a comma separated list of <attrib>:<value> is irrelevant
-#NOTE 2: This grammar is still in the specification process.
+#NOTE 2: This grammar is still under the specification process.
 
 
 #CONFIGS -> CONFIG_ITEMS |{CONFIG_ITEMS}
@@ -59,7 +59,7 @@
             NAME: "SW1_MAPUTO",
             CONFIG: {
                 HOSTNAME: "",
-                #missing fields will be field by DEFAULT_CONFIG
+                #missing fields will be filled by DEFAULT_CONFIG
             },
             INTERFACES:
                 {
@@ -76,7 +76,7 @@
             NAME: "SW2",
             CONFIG: {
                 HOSTNAME: "SW2_MAPUTO",
-                #missing fields will be field by DEFAULT_CONFIG
+                #missing fields will be filled by DEFAULT_CONFIG
             },
             INTERFACES: {
                     ACCESS: switchport_access_list,  #will try to find `switchport_access_list` entry to use as value, if error it will fail 
@@ -92,7 +92,7 @@
             NAME: "R1",
             CONFIG: {
                 HOSTNAME: "ROUTER_MAPUTO",
-                #missing fields will be field by DEFAULT_CONFIG
+                #missing fields will be filled by DEFAULT_CONFIG
             },
             INTERFACES:
                 {
