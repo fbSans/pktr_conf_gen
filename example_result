@@ -1,0 +1,230 @@
+################################################################################
+Generating config for SW1_MAPUTO
+################################################################################
+# Configuration for SW1_MAPUTO
+
+configuration terminal
+
+hostname 
+
+ip domain name internal_net
+
+enable secret feuem
+
+line console 0
+password feuem
+login
+exit
+
+line vty 0 4
+password feuem
+login
+exit
+
+motd #ACESSO NEGADO!!!#
+
+vlan 10
+name GESTAO
+exit
+
+
+vlan 20
+name CLIENTE
+exit
+
+
+vlan 30
+name SERVIDORES
+exit
+
+
+vlan 88
+name WIFI
+exit
+
+
+interface range fa0/1-5
+switchport mode access
+switchport access vlan 10
+no shutdown
+exit
+
+interface range fa0/6-10
+switchport mode access
+switchport access vlan 20
+no shutdown
+exit
+
+interface range fa0/11-15
+switchport mode access
+switchport access vlan 30
+no shutdown
+exit
+
+interface range fa0/16-20
+switchport mode access
+switchport access vlan 88
+no shutdown
+exit
+
+interface range fa0/21-24
+switchport mode trunk
+switchport trunk allowed vlan all
+no shutdown
+exit
+
+interface range gig0/1-2
+switchport mode trunk
+switchport trunk allowed vlan all
+no shutdown
+exit
+
+interface vlan 10
+ip address 192.168.10.2 255.255.255.0
+no shutdown
+exit
+
+
+################################################################################
+Generating config for SW2
+################################################################################
+# Configuration for SW2
+
+configuration terminal
+
+hostname SW2_MAPUTO
+
+ip domain name internal_net
+
+enable secret feuem
+
+line console 0
+password feuem
+login
+exit
+
+line vty 0 4
+password feuem
+login
+exit
+
+motd #ACESSO NEGADO!!!#
+
+vlan 10
+name GESTAO
+exit
+
+
+vlan 20
+name CLIENTE
+exit
+
+
+vlan 30
+name SERVIDORES
+exit
+
+
+vlan 88
+name WIFI
+exit
+
+
+interface range fa0/1-5
+switchport mode access
+switchport access vlan 10
+no shutdown
+exit
+
+interface range fa0/6-10
+switchport mode access
+switchport access vlan 20
+no shutdown
+exit
+
+interface range fa0/11-15
+switchport mode access
+switchport access vlan 30
+no shutdown
+exit
+
+interface range fa0/16-20
+switchport mode access
+switchport access vlan 88
+no shutdown
+exit
+
+interface range fa0/21-24
+switchport mode trunk
+switchport trunk allowed vlan all
+no shutdown
+exit
+
+interface range gig0/1-2
+switchport mode trunk
+switchport trunk allowed vlan all
+no shutdown
+exit
+
+interface vlan 10
+ip address 192.168.10.2 255.255.255.0
+no shutdown
+exit
+
+
+################################################################################
+Generating config for R1
+################################################################################
+# Configuration for R1
+
+configuration terminal
+
+hostname ROUTER_MAPUTO
+
+ip domain name internal_net
+
+enable secret feuem
+
+line console 0
+password feuem
+login
+exit
+
+line vty 0 4
+password feuem
+login
+exit
+
+motd #ACESSO NEGADO!!!#
+
+ip dhcp pool vlan20
+network 192.168.20.0 255.255.255.0
+default-router 192.168.20.254
+exit
+
+interface gig0/0
+no shutdown
+exit
+
+interface gig0/0.10
+encapsulation dot1Qip address 192.168.10.254 255.255.255.0
+no shutdown
+exit
+
+interface gig0/0.20
+encapsulation dot1Qip address 192.168.20.254 255.255.255.0
+no shutdown
+exit
+
+interface gig0/0.30
+encapsulation dot1Qip address 192.168.20.254 255.255.255.0
+no shutdown
+exit
+
+interface gig0/0.88
+encapsulation dot1Qip address 192.168.88.254 255.255.255.0
+no shutdown
+exit
+
+
+

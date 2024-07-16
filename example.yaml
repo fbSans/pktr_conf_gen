@@ -1,23 +1,3 @@
-
-#NOTE 1: The order of items in a comma separated list of <attrib>:<value> is irrelevant
-#NOTE 2: This grammar is still under the specification process.
-
-
-#CONFIGS -> CONFIG_ITEMS |{CONFIG_ITEMS}
-#CONFIG_ITEMS -> ITEM_SPEC, CONFIG_ITEMS | ε
-#ITEM_SPEC -> VLAN_DESC : {NUMBER: <number>, NAME: <word>, [NETWORK_ADDRESS: "<decimal_ip> <decimal_mask>"], [GATEWAY_ADDRESS: "<decimal_ip> <decimal_mask>", [DHCP: TRUE|FALSE]]}
-#ITEM_SPEC ->
-#ITEM_NAME -> VLAN_DESC  | SWITCH_INFO_DESC | ROUTER_INFO_DESC | CONFIG_DESC | IF_DESC
-#ITEM_NAME -> 
-#fall back for any unspecified config field in any DEVICE_INFO
-#This is a definition of a simple topology
-
-
-#for defered information we have
-    # item: variable
-    # where variable has the expected value for item
-    # values are quoted, items and variables are not, so if after colon (:) we find an unquoted value it will be treated as a variable of the expected type
-#kinda big I see
 {
     DEFAULT_CONFIG: {
                 HOSTNAME: "",
