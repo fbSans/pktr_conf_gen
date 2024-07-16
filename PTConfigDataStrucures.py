@@ -95,9 +95,8 @@ class ROUTER_INTERFACE_INFO(INTERFACE_INFO):
         self.clockrate = clockrate
         
     def generate_config_if(self, file=sys.stdout):
-        config_if = ""
+        config_if = f"interface {self.name}\n"
         if self.vlan is not None:
-            config_if = f"interface {self.name}\n"
             config_if += f"ip address {self.vlan.gateway_address.ip} {self.vlan.gateway_address.mask}\n"
         if self.clockrate is not None : config_if += f"clockrate {self.clockrate}\n"
         print(config_if, file=file, end='') 

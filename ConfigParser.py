@@ -437,7 +437,7 @@ def parse_router_interface_from_dict(items: dict[str, int|str|list|dict], vlan_i
     return router_interface_info
 
 def parse_router_subinterface_from_dict(items: dict[str, int|str|list|dict], vlan_infos: list[VLAN_INFO], location: Location):
-    router_subinterface_info = ROUTER_SUBINTERFACE_INFO(None, None, None, "dot1Q", False)
+    router_subinterface_info = ROUTER_SUBINTERFACE_INFO(None, None, "", "dot1Q", False)
     found_items: set[str] = set()
 
     for item_name, item_value in items.items():
