@@ -110,7 +110,7 @@ class ROUTER_SUBINTERFACE_INFO(INTERFACE_INFO):
 
     def generate_config_if(self, file=sys.stdout):
         config_if = f"interface {self.name}\n"
-        config_if += f"encapsulation {self.encapsulation}"
+        config_if += f"encapsulation {self.encapsulation}\n"
         config_if += f"ip address {self.vlan.gateway_address.ip} {self.vlan.gateway_address.mask}\n"
         print(config_if, file=file, end='') 
         super().generate_config_if(file)

@@ -207,22 +207,26 @@ no shutdown
 exit
 
 interface gig0/0.10
-encapsulation dot1Qip address 192.168.10.254 255.255.255.0
+encapsulation dot1Q
+ip address 192.168.10.254 255.255.255.0
 no shutdown
 exit
 
 interface gig0/0.20
-encapsulation dot1Qip address 192.168.20.254 255.255.255.0
+encapsulation dot1Q
+ip address 192.168.20.254 255.255.255.0
 no shutdown
 exit
 
 interface gig0/0.30
-encapsulation dot1Qip address 192.168.20.254 255.255.255.0
+encapsulation dot1Q
+ip address 192.168.20.254 255.255.255.0
 no shutdown
 exit
 
 interface gig0/0.88
-encapsulation dot1Qip address 192.168.88.254 255.255.255.0
+encapsulation dot1Q
+ip address 192.168.88.254 255.255.255.0
 no shutdown
 exit
 
