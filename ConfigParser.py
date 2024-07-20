@@ -8,7 +8,7 @@ from ConfigLexer import *
 
 #used to make assertions uppon token types and/or values. if the provided argument to the parameter value is None, value won't be checked
 def assert_expected_token(actual_token: Token, expected_type: TokenType, expected_value: str = None):
-    if expected_value == None:
+    if expected_value is None:
         if not (actual_token.type == expected_type): panic(f"{actual_token.location} Expected token type {expected_type}, but found token type {actual_token.type.name}.")
     else:
         if not (actual_token.type == expected_type and actual_token.value == expected_value): 
