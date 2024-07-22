@@ -22,7 +22,7 @@ def token_type_from_string(str: str):
         return TokenType.KEYWORD
     if str.isdigit():
         return TokenType.INTEGER_LITERAL
-    return None  
+    return TokenType.UNKNOWN  
 
 
 def remove_current_line(str: str) -> str:
@@ -86,7 +86,7 @@ def lex_config_from_string(config_string: str, row: int, filepath: str) -> list[
                     word, config_string = next_word(config_string)
                     token_type = token_type_from_string(word)
                     token_value = word
-                    if token_type is None: token_type = TokenType.IDENTIFIER 
+                    if token_type == TokenType.UNKNOWN: token_type = TokenType.IDENTIFIER 
         if(token_type != TokenType.UNKNOWN):
             col = original_size - len(config_string) - len(token_value) + 1
             token = Token(token_type, token_value, Location(filepath, row, col))
