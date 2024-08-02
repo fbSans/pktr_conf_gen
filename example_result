@@ -3,7 +3,7 @@ Generating config for SW1_MAPUTO
 ################################################################################
 # Configuration for SW1_MAPUTO
 
-configuration terminal
+configure terminal
 
 hostname 
 
@@ -21,7 +21,7 @@ password feuem
 login
 exit
 
-motd #ACESSO NEGADO!!!#
+motd # ACESSO NEGADO!!! #
 
 vlan 10
 name GESTAO
@@ -90,7 +90,7 @@ Generating config for SW2
 ################################################################################
 # Configuration for SW2
 
-configuration terminal
+configure terminal
 
 hostname SW2_MAPUTO
 
@@ -108,7 +108,7 @@ password feuem
 login
 exit
 
-motd #ACESSO NEGADO!!!#
+motd # ACESSO NEGADO!!! #
 
 vlan 10
 name GESTAO
@@ -177,7 +177,7 @@ Generating config for R1
 ################################################################################
 # Configuration for R1
 
-configuration terminal
+configure terminal
 
 hostname ROUTER_MAPUTO
 
@@ -195,7 +195,7 @@ password feuem
 login
 exit
 
-motd #ACESSO NEGADO!!!#
+motd # ACESSO NEGADO!!! #
 
 ip dhcp pool vlan20
 network 192.168.20.0 255.255.255.0
