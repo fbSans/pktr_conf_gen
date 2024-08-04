@@ -21,7 +21,7 @@ password feuem
 login
 exit
 
-motd # ACESSO NEGADO!!! #
+banner motd # ACESSO NEGADO!!! #
 
 vlan 10
 name GESTAO
@@ -108,7 +108,7 @@ password feuem
 login
 exit
 
-motd # ACESSO NEGADO!!! #
+banner motd # ACESSO NEGADO!!! #
 
 vlan 10
 name GESTAO
@@ -195,7 +195,7 @@ password feuem
 login
 exit
 
-motd # ACESSO NEGADO!!! #
+banner motd # ACESSO NEGADO!!! #
 
 ip dhcp pool vlan20
 network 192.168.20.0 255.255.255.0
