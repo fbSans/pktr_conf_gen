@@ -159,7 +159,7 @@ class DEVICE_INFO(ABC):
                 basic_config += f"password {self.config_info.password}\n"
                 basic_config += f"login\n"
                 basic_config += f"exit\n\n"    
-            basic_config += f"motd # {self.config_info.motd} #\n\n"
+            basic_config += f"banner motd # {self.config_info.motd} #\n\n"
         if self.config_info.enable_ssh:
             basic_config += "crypto key generate rsa\n" #hardcode rsa
             basic_config += "ip ssh version 2\n"
