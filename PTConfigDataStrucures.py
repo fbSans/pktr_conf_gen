@@ -74,6 +74,7 @@ class SWITCHPORT_TRUNCK_INFO(INTERFACE_INFO):
 
     def generate_config_if(self, file=sys.stdout):
         config_if = f"interface {self.name}\n"
+        config_if += "switchport trunk encapsulation dot1Q\n"
         config_if += f"switchport mode trunk\n"
         config_if += f"switchport trunk allowed vlan all\n"
         print(config_if, file=file, end='') 
