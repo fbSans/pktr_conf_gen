@@ -356,6 +356,8 @@ def parse_switchport_access_from_dict(items: dict[int|str|list|dict], vlan_infos
             case Keyword.IF_NAME.name:
                 switch_port_info.name = item_value
             case Keyword.VLAN_NUMBER.name:
+                if not vlan_infos.__contains__(int(item_value)):
+                     panic(f"{location} VLAN {item_value} is not defined in the configuration file")
                 switch_port_info.vlan = vlan_infos[int(item_value)]
             case Keyword.DESCRIPTION.name:
                 switch_port_info.description = item_value
