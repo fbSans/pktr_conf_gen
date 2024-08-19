@@ -28,7 +28,7 @@ def expect_next_token_value(tokens: list[Token], expected_token_values: list[str
     if len(tokens) == 0 :
         panic(f"expected to find token value in {expected_token_values}, but found no more tokens")
     elif tokens[0].value.upper() not in expected_token_values: 
-        panic(f"expected to find token type in {expected_token_values}, but found {tokens[0].value}")
+        panic(f"{tokens[0].location}: expected to find token type in {expected_token_values}, but found {tokens[0].value}")
 
 
 #removes the next comma in  the token list. if there is no comma it will fail, unless it finds an empty list, or closing tokens like }, ], ) 
@@ -332,7 +332,7 @@ def parse_list(tokens: list[Token], variables: dict[str,int|str|list|dict]) -> t
                 res_list, tokens, variables = parse_list(tokens, variables)
                 res.append(res_list)
             case TokenType.KEYWORD:
-                expect_next_token_value[Keyword.TRUE.name, Keyword.FALSE.name]
+                expect_next_token_value(tokens, [Keyword.TRUE.name, Keyword.FALSE.name])
                 res.append(current_token.value)
                 _, *tokens = tokens
                 tokens = remove_next_comma(tokens)
