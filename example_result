@@ -23,6 +23,7 @@ exit
 
 banner motd # ACESSO NEGADO!!! #
 
+
 vlan 10
 name GESTAO
 exit
@@ -68,12 +69,14 @@ no shutdown
 exit
 
 interface range fa0/21-24
+switchport trunk encapsulation dot1Q
 switchport mode trunk
 switchport trunk allowed vlan all
 no shutdown
 exit
 
 interface range gig0/1-2
+switchport trunk encapsulation dot1Q
 switchport mode trunk
 switchport trunk allowed vlan all
 no shutdown
@@ -110,6 +113,7 @@ exit
 
 banner motd # ACESSO NEGADO!!! #
 
+
 vlan 10
 name GESTAO
 exit
@@ -155,12 +159,14 @@ no shutdown
 exit
 
 interface range fa0/21-24
+switchport trunk encapsulation dot1Q
 switchport mode trunk
 switchport trunk allowed vlan all
 no shutdown
 exit
 
 interface range gig0/1-2
+switchport trunk encapsulation dot1Q
 switchport mode trunk
 switchport trunk allowed vlan all
 no shutdown
@@ -197,6 +203,11 @@ exit
 
 banner motd # ACESSO NEGADO!!! #
 
+ip route 192.168.100.0 255.255.255.0 10.1.1.5
+ip route 192.168.110.0 255.255.255.0 10.1.1.5
+ip route 192.168.120.0 255.255.255.0 10.1.1.3
+ip route 192.168.130.0 255.255.255.0 10.1.1.3
+
 ip dhcp pool vlan20
 network 192.168.20.0 255.255.255.0
 default-router 192.168.20.254
@@ -207,25 +218,25 @@ no shutdown
 exit
 
 interface gig0/0.10
-encapsulation dot1Q
+encapsulation dot1Q 10
 ip address 192.168.10.254 255.255.255.0
 no shutdown
 exit
 
 interface gig0/0.20
-encapsulation dot1Q
+encapsulation dot1Q 20
 ip address 192.168.20.254 255.255.255.0
 no shutdown
 exit
 
 interface gig0/0.30
-encapsulation dot1Q
+encapsulation dot1Q 30
 ip address 192.168.20.254 255.255.255.0
 no shutdown
 exit
 
 interface gig0/0.88
-encapsulation dot1Q
+encapsulation dot1Q 88
 ip address 192.168.88.254 255.255.255.0
 no shutdown
 exit
