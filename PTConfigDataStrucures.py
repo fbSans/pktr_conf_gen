@@ -23,6 +23,15 @@ class InetAddress6(InetAddress):
         super().__init__(ipv6, mask)
 
 @dataclass
+class ROUTE(ABC):
+    pass
+
+@dataclass
+class STATIC_ROUTE(ROUTE):
+    network: InetAddress
+    hop: InetAddress
+
+@dataclass
 class VLAN_INFO:
     name : str
     number : int
@@ -130,10 +139,11 @@ class CONFIG_INFO:
     ssh_password : str = ''
 
 class DEVICE_INFO(ABC):
-    def __init__(self, name: str, config_info: CONFIG_INFO, interfaces: list[INTERFACE_INFO]):
+    def __init__(self, name: str, config_info: CONFIG_INFO, interfaces: list[INTERFACE_INFO], routes: list[ROUTE] = []):
         self.name = name
         self.config_info = config_info
         self.interfaces = interfaces
+        self.routes = routes
         self.vlans : dict [str, VLAN_INFO]  = dict() #items are (key: vlan_name, value: VLAN_INFO)
         # cache the vlans known by the device
         for interface in self.interfaces:
@@ -173,6 +183,11 @@ class DEVICE_INFO(ABC):
     def generate_config_if(self, file = sys.stdout):
         for interface in self.interfaces:
             interface.generate_config_if(file)
+    def generate_routes(self, file):
+        for route in self.routes:
+            if isinstance(route, STATIC_ROUTE):
+                print(f"ip route {route.network.ip} {route.network.mask} {route.hop.ip}", file=file)
+        print(file=file)
     
     @abstractmethod
     def generate_config(self, file= sys.stdout):
@@ -180,6 +195,7 @@ class DEVICE_INFO(ABC):
         print(f"# Configuration for {self.name}\n\n", file=file, end='')
         print("configure terminal\n", file=file)
         self.generate_basic_config(file)
+        self.generate_routes(file)
         pass
 
     def __str__(self) -> str:
@@ -189,8 +205,8 @@ class DEVICE_INFO(ABC):
         return self.__str__()
 
 class SWITCH_INFO (DEVICE_INFO):
-    def __init__(self, name: str, config_info: CONFIG_INFO, interfaces: list[SWITCHPORT_ACCESS_INFO | SWITCHPORT_TRUNCK_INFO | INTERFACE_VLAN_INFO]):
-        super().__init__(name, config_info, interfaces)
+    def __init__(self, name: str, config_info: CONFIG_INFO, interfaces: list[SWITCHPORT_ACCESS_INFO | SWITCHPORT_TRUNCK_INFO | INTERFACE_VLAN_INFO], routes: list[ROUTE]):
+        super().__init__(name, config_info, interfaces, routes)
 
     def generate_basic_config(self, file=sys.stdout):
         return super().generate_basic_config(file)
@@ -216,8 +232,8 @@ class SWITCH_INFO (DEVICE_INFO):
 
 
 class ROUTER_INFO (DEVICE_INFO):
-    def __init__(self, name: str, config_info: CONFIG_INFO, interfaces: list[ROUTER_INTERFACE_INFO | ROUTER_SUBINTERFACE_INFO]):
-        super().__init__(name, config_info, interfaces)
+    def __init__(self, name: str, config_info: CONFIG_INFO, interfaces: list[ROUTER_INTERFACE_INFO | ROUTER_SUBINTERFACE_INFO], routes: list[ROUTE]):
+        super().__init__(name, config_info, interfaces, routes)
       
     def generate_basic_config(self, file=sys.stdout):
         super().generate_basic_config(file)

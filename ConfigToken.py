@@ -81,6 +81,9 @@ class Keyword(Enum):
     INTERFACE = iota()
     SUBINTERFACE = iota()
     INTERFACES = iota()
+    ROUTES = iota()
+    STATIC = iota()
+    HOP = iota()
     reset()
 
 

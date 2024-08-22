@@ -82,7 +82,15 @@
                         {IF_NAME: "gig0/0.20", ENCAPSULATION: "dot1Q", VLAN_NUMBER: 20  , SHUTDOWN: FALSE},
                         {IF_NAME: "gig0/0.30", ENCAPSULATION: "dot1Q", VLAN_NUMBER: 30  , SHUTDOWN: FALSE},
                         {IF_NAME: "gig0/0.88", ENCAPSULATION: "dot1Q", VLAN_NUMBER: 88  , SHUTDOWN: FALSE},
+                    ],
+                },
+            #Example of use of routes
+            ROUTES:
+               {
+                    #Specifying static routes
+                    STATIC: [
+                        {NETWORK_ADDRESS: "192.168.100.0 255.255.255.0", HOP: "10.1.1.5"}
                     ]
-                }
-        }
+            },
+        },
 }
