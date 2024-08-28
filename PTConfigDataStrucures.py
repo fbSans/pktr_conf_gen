@@ -31,6 +31,13 @@ class STATIC_ROUTE(ROUTE):
     network: InetAddress
     hop: InetAddress
 
+@dataclass 
+class RIP_ROUTE:
+    version: int
+    networks: list[InetAddress]
+    passive_interfaces: list[str]
+    is_default_information: bool
+
 @dataclass
 class VLAN_INFO:
     name : str
@@ -113,7 +120,7 @@ class ROUTER_INTERFACE_INFO(INTERFACE_INFO):
         super().generate_config_if(file)
 
 class ROUTER_SUBINTERFACE_INFO(INTERFACE_INFO):
-    def __init__(self, name: str, vlan: VLAN_INFO, description: str = "", encapsulation: str = 'dot1Q', shutdown : bool=True):
+    def __init__(self, name: str, vlan: VLAN_INFO, description: str = "", encapsulation: str = 'dot1Q', shutdown : bool=False):
         assert encapsulation == 'dot1Q', f"Unsupported encapsulation {encapsulation}"
         super().__init__(name, vlan, description, shutdown)
         self.encapsulation = encapsulation
@@ -183,11 +190,26 @@ class DEVICE_INFO(ABC):
     def generate_config_if(self, file = sys.stdout):
         for interface in self.interfaces:
             interface.generate_config_if(file)
+
     def generate_routes(self, file):
         for route in self.routes:
             if isinstance(route, STATIC_ROUTE):
-                print(f"ip route {route.network.ip} {route.network.mask} {route.hop.ip}", file=file)
-        print(file=file)
+                print(f"ip route {route.network.ip} {route.network.mask} {route.hop.ip}\n", file=file)
+            elif isinstance(route, RIP_ROUTE):
+                rip_config: str = ""
+                rip_config += "router rip\n"
+                rip_config += "version 2\n"
+                if route.is_default_information:
+                    rip_config += "default-information originate\n"
+                for network in route.networks:
+                    rip_config += f"network {network}\n"
+                for interface in route.passive_interfaces:
+                    rip_config += f"passive interface {interface}\n"
+                rip_config += "exit\n"
+                print(rip_config, file=file, end='')
+            else:
+                assert False, "Unreachable"
+        print("\n",file=file)
     
     @abstractmethod
     def generate_config(self, file= sys.stdout):

@@ -84,6 +84,11 @@ class Keyword(Enum):
     ROUTES = iota()
     STATIC = iota()
     HOP = iota()
+    RIP = iota()
+    VERSION = iota()
+    NETWORKS = iota()
+    PASSIVE_INTERFACES = iota()
+    DEFAULT_INFORMATION = iota()
     reset()
 
 

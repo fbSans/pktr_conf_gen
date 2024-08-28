@@ -24,6 +24,7 @@ exit
 banner motd # ACESSO NEGADO!!! #
 
 
+
 vlan 10
 name GESTAO
 exit
@@ -112,6 +113,7 @@ login
 exit
 
 banner motd # ACESSO NEGADO!!! #
+
 
 
 vlan 10
@@ -203,10 +205,21 @@ exit
 
 banner motd # ACESSO NEGADO!!! #
 
-ip route 192.168.100.0 255.255.255.0 10.1.1.5
-ip route 192.168.110.0 255.255.255.0 10.1.1.5
-ip route 192.168.120.0 255.255.255.0 10.1.1.3
-ip route 192.168.130.0 255.255.255.0 10.1.1.3
+ip route 0.0.0.0 0.0.0.0 10.1.1.3
+
+router rip
+version 2
+default-information originate
+network 10.1.1.0
+network 192.168.10.0
+network 192.168.20.0
+network 192.168.30.0
+network 192.168.40.0
+passive interface fa0/0
+passive interface fa0/1
+passive interface gig0/1
+exit
+
 
 ip dhcp pool vlan20
 network 192.168.20.0 255.255.255.0

@@ -89,11 +89,24 @@
                {
                     #Specifying static routes
                     STATIC: [
-                        {NETWORK_ADDRESS: "192.168.100.0 255.255.255.0", HOP: "10.1.1.5"},
-                        {NETWORK_ADDRESS: "192.168.110.0 255.255.255.0", HOP: "10.1.1.5"},
-                        {NETWORK_ADDRESS: "192.168.120.0 255.255.255.0", HOP: "10.1.1.3"},
-                        {NETWORK_ADDRESS: "192.168.130.0 255.255.255.0", HOP: "10.1.1.3"},
+                        {NETWORK_ADDRESS: "0.0.0.0 0.0.0.0", HOP: "10.1.1.3"},
                     ],
+                    RIP: {
+                        VERSION: 2, 
+                        NETWORKS: [
+                            "10.1.1.0",
+                            "192.168.10.0",
+                            "192.168.20.0",
+                            "192.168.30.0",
+                            "192.168.40.0",
+                        ],
+                        PASSIVE_INTERFACES: [
+                            "fa0/0",
+                            "fa0/1",
+                            "gig0/1",
+                        ],
+                        DEFAULT_INFORMATION: TRUE,  # By default is set to false 
+                    },
             },
         },
 }

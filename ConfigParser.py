@@ -480,6 +480,29 @@ def parse_static_routes_from_dict(items: dict[str, int|str|list|dict], vlan_info
 
     return static_route
     
+def parse_rip_route_from_dict(items: dict[str, int|str|list|dict], vlan_infos: list[VLAN_INFO], location: Location) -> RIP_ROUTE:
+    rip_route = RIP_ROUTE(2, [], [], False)
+    found_items: set[str] = set()
+
+    for item_name, item_value in items.items():
+        if item_name in found_items: panic(f"{location}: Redefinition of property {item_name}")
+        found_items.add(item_name)
+        match(item_name):
+            case Keyword.NETWORKS.VERSION.name:
+                rip_route.version = int(item_value)
+            case Keyword.NETWORKS.name:
+                if not isinstance(item_value, list): panic(f"{location} Expected networks to be a list.")
+                for s in item_value:
+                    if not is_ip_v4(s): panic("item has an item which is not a valid ipv4 string")
+                rip_route.networks = item_value
+            case Keyword.PASSIVE_INTERFACES.name:
+                if not isinstance(item_value, list): panic(f"{location} Expected networks to be a list.")
+                rip_route.passive_interfaces = item_value
+            case Keyword.DEFAULT_INFORMATION.name:
+                rip_route.is_default_information = parse_bool(item_value)
+            case _:
+                panic(f"{location} Unexpected RIP ROUTE item: {item_name}")
+    return rip_route
 
 
 def parse_interfaces(tokens: list[Token], variables: dict[str,int|str|list|dict], vlan_infos: list[VLAN_INFO]) -> tuple[INTERFACE_INFO, list[Token], dict[str,int|str|list|dict]]:
@@ -592,6 +615,7 @@ def parse_routes(tokens: list[Token], variables: dict[str, int|str|list|dict], v
     found_items : set = set()
     routes_expected_item_names = [
        Keyword.STATIC.name,
+       Keyword.RIP.name,
     ]
 
     #strinping the header ROUTES:{
@@ -627,7 +651,7 @@ def parse_routes(tokens: list[Token], variables: dict[str, int|str|list|dict], v
                         routes.append(parse_static_routes_from_dict(dct, vlan_infos, key.location))
             tokens = remove_next_comma(tokens)  
         else:  
-            expect_next_token_type(tokens[2:], [TokenType.OPEN_SQUARE])
+            expect_next_token_type(tokens[2:], [TokenType.OPEN_SQUARE, TokenType.OPEN_CURLY])
             _, _, *tokens = tokens
             match(key.value):
                 case Keyword.STATIC.name:
@@ -635,6 +659,9 @@ def parse_routes(tokens: list[Token], variables: dict[str, int|str|list|dict], v
                     for dct in item_list:
                         if not isinstance(dct, dict): panic(f"{key.location} Expected variable list items to be dictionaries")
                         routes.append(parse_static_routes_from_dict(dct, vlan_infos, key.location))
+                case Keyword.RIP.name:
+                    rip_dct, tokens, variables = parse_dict(tokens, variables)
+                    routes.append(parse_rip_route_from_dict(rip_dct, vlan_infos, key.location))
                 case _:
                     panic("parse_interfaces: Unreachable location")
 
