@@ -218,6 +218,9 @@ class DEVICE_INFO(ABC):
         print("configure terminal\n", file=file)
         self.generate_basic_config(file)
         self.generate_routes(file)
+        print("end")
+        print("copy running-config startup-config")
+        print("")
         pass
 
     def __str__(self) -> str:
