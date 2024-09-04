@@ -218,9 +218,6 @@ class DEVICE_INFO(ABC):
         print("configure terminal\n", file=file)
         self.generate_basic_config(file)
         self.generate_routes(file)
-        print("end")
-        print("copy running-config startup-config")
-        print("")
         pass
 
     def __str__(self) -> str:
@@ -283,6 +280,9 @@ class ROUTER_INFO (DEVICE_INFO):
         #generate 
         for interface in self.interfaces:
             interface.generate_config_if(file)
+        print("end", file=file)
+        print("copy running-config startup-config", file=file)
+        print(file=file)
 
     
 def generate_config(file = sys.stdout, devices: list[SWITCH_INFO | ROUTER_INFO] = []):
