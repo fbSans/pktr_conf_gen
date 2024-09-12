@@ -63,6 +63,88 @@ def next_simple_pair(tokens: list[Token]) -> tuple[Token, Token, list[Token]]:
     return key, value, tokens
 
 
+################################# IP validation functions ###########################################################
+def is_ipv4(str: str) -> bool:
+    parts = str.split('.')
+    if len(parts) != 4: return False
+    for part in parts:
+        if not part.isdigit() and not (0 <= int(part) <= 255): return False
+    return True
+
+#This function was used to generate the ip list
+# def ipv4_mask_from_num(n: int) -> int:
+#     if not (0 <= n <= 32): return 0
+#     mask = 0
+#     for i in range(32):
+#         mask *= 2
+#         if n > 0:
+#             mask += 1
+#             n -= 1
+#         else:
+#             mask += 0
+#     return mask
+
+valid_ipv4_masks =  {   
+                        0x0,        0x80000000, 0xc0000000, 0xe0000000, 0xf0000000, 0xf8000000, 0xfc000000, 0xfe000000, 
+                        0xff000000, 0xff800000, 0xffc00000, 0xffe00000, 0xfff00000, 0xfff80000, 0xfffc0000, 0xfffe0000,
+                        0xffff0000, 0xffff8000, 0xffffc000, 0xffffe000, 0xfffff000, 0xfffff800, 0xfffffc00, 0xfffffe00, 
+                        0xffffff00, 0xffffff80, 0xffffffc0, 0xffffffe0, 0xfffffff0, 0xfffffff8, 0xfffffffc, 0xfffffffe,
+                        0xffffffff,
+                    }
+
+def is_ipv4_mask(mask: str):
+    if not is_ipv4(mask): return False
+    octets = mask.split('.')
+    int_mask = 0
+    for octet in octets:
+        int_mask <<= 8
+        int_mask += int(octet)
+    return int_mask in valid_ipv4_masks
+
+def is_ipv4_with_mask(str: str) -> bool:
+    if len(str.split()) != 2: return False
+    ip, mask, *rest = str.split()
+    return is_ipv4(ip) and  is_ipv4_mask(mask)
+        
+
+
+def valid_sextect(s: str):
+    if len(s) > 4:
+        return False
+    for c in s:
+        if c.lower() not in "0123456789abcdef":
+            return False
+    return True
+    
+
+def is_ipv6(ip: str):
+    sextects = []
+    if ip.count(':::') > 0:
+        return False
+    if ip.count('::') > 1:
+        return False
+    if ip.count('::') == 1:
+        parts = ip.split('::')
+        sextects.extend(parts[0].split(':'))
+        sextects.extend(parts[1].split(':'))
+        if(len(sextects) >= 8):
+            return False
+    else:
+        sextects.extend(ip.split(':'))
+        if(len(sextects) != 8):
+            return False
+    for term in sextects:
+        if not valid_sextect(term):
+            return False
+    return True
+
+def is_ipv6_with_mask(ip: str):
+    parts = ip.split('/')
+    if len(parts) != 2:
+        return False
+    return is_ipv6(parts[0]) and parts[1].isdigit() and 0 <= int(parts[1]) <= 128
+
+
 ############################################## Generating Functions ##################################################
     
 #parses line_vty from the list of tokens
@@ -197,24 +279,15 @@ def parse_device_config(tokens: list[Token], variables: dict[str,int|str|list|di
 
     return config, tokens, variables 
 
-def is_ip_v4(str: str) -> bool:
-    parts = str.split('.')
-    if len(parts) != 4: return False
-    for part in parts:
-        if not part.isdigit() and not (0 <= int(part) <= 255): return False
-    return True
 
-#takes a string of the form "xxx.xxx.xxx.xxx xxx.xxx.xxx.xxx" and returns and I
 def parseInetAddress(str: str, location: Location) -> InetAddress:
-    ip, mask, *rest = str.split()
-    if rest != []:
-        panic(f"{location} The ip string must contain only to parts: the ip address and the mask")
-
-    if is_ip_v4(ip) and is_ip_v4(mask):
+    if is_ipv4_with_mask(str):
+        ip, mask, *rest = str.split()
         return InetAddress4(ip, mask)
-    
-    #TODO: add support to IPV6
-    panic(f"{location} Invalid IP value: {str}. Note: Only IPv4 is supported")
+    elif is_ipv6_with_mask(str):
+        parts = str.split('/')
+        return InetAddress6(parts[0], parts[1])
+    panic(f"{location} Invalid IP value: {str} its not a valid IPv4 or IPv6 address")
      
 
 def parse_vlan_info(tokens: list[Token], variables: dict[str,int|str|list|dict]) -> tuple[VLAN_INFO, list[Token], dict[str,int|str|list|dict]] :
@@ -472,7 +545,9 @@ def parse_static_routes_from_dict(items: dict[str, int|str|list|dict], vlan_info
             case Keyword.NETWORK_ADDRESS.name:
                 static_route.network =  parseInetAddress(item_value, location)
             case Keyword.HOP.name:
-                static_route.hop = parseInetAddress(item_value + " 0.0.0.0", location) #hop must be provided without mask 
+                if is_ipv4(item_value): item_value += " 0.0.0.0" #hop must be provided without mask 
+                elif is_ipv6(item_value): item_value += "/0"
+                static_route.hop = parseInetAddress(item_value, location) 
             case _:
                 panic(f"{location} Unexpected STATIC ROUTE item: {item_value}")
     if static_route.hop is None: panic(f"{location} missing field HOP in STATIC ROUTE definition")
@@ -492,9 +567,13 @@ def parse_rip_route_from_dict(items: dict[str, int|str|list|dict], vlan_infos: l
                 rip_route.version = int(item_value)
             case Keyword.NETWORKS.name:
                 if not isinstance(item_value, list): panic(f"{location} Expected networks to be a list.")
+                networks: list[InetAddress] = []
                 for s in item_value:
-                    if not is_ip_v4(s): panic("item has an item which is not a valid ipv4 string")
-                rip_route.networks = item_value
+                    if not (is_ipv4(s) or is_ipv6(s)): panic(f"{location} items contains {s} which is not a valid IP string")
+                    if is_ipv4(s): s += " 0.0.0.0" #hop must be provided without mask 
+                    elif is_ipv6(s): s += "/0"
+                    networks.append(parseInetAddress(s, location))
+                rip_route.networks = networks
             case Keyword.PASSIVE_INTERFACES.name:
                 if not isinstance(item_value, list): panic(f"{location} Expected networks to be a list.")
                 rip_route.passive_interfaces = item_value
