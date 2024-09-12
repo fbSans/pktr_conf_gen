@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from abc import ABC, abstractmethod
 import sys
 
-class InetAddress:
+class InetAddress(ABC):
     def __init__(self, ip: str, mask: str):
         self.ip = ip
         self.mask: str = mask
@@ -11,16 +11,24 @@ class InetAddress:
     
     def __repr__(self):
         return self.__str__()
+    
+    @staticmethod
+    def address_representation(self)-> str:
+        pass
 
 class InetAddress4(InetAddress):
     def __init__(self, ipv4: str, mask: str):
         #add a check to ipv4
         super().__init__(ipv4, mask)
+    def address_representation(self)-> str:
+        return f"{self.ip} {self.mask}"
     
 class InetAddress6(InetAddress):
     def __init__(self, ipv6: str, mask: str):
         #add a check to ipv6
         super().__init__(ipv6, mask)
+    def address_representation(self)-> str:
+        return f"{self.ip}/{self.mask}"
 
 @dataclass
 class ROUTE(ABC):
@@ -102,7 +110,8 @@ class INTERFACE_VLAN_INFO(INTERFACE_INFO):
 
     def generate_config_if(self, file=sys.stdout):
         config_if = f"interface vlan {self.vlan.number}\n"
-        config_if += f"ip address {self.vlan.network_address.ip} {self.vlan.network_address.mask}\n"
+
+        config_if += f"ip address {self.vlan.network_address.address_representation()}\n"
         print(config_if, file=file,end='') 
         super().generate_config_if(file)
 
@@ -114,7 +123,8 @@ class ROUTER_INTERFACE_INFO(INTERFACE_INFO):
     def generate_config_if(self, file=sys.stdout):
         config_if = f"interface {self.name}\n"
         if self.vlan is not None:
-            config_if += f"ip address {self.vlan.gateway_address.ip} {self.vlan.gateway_address.mask}\n"
+            if isinstance(self.vlan.network_address, InetAddress6): config_if += "ipv6 enable"
+            config_if += f"ip address {self.vlan.network_address.address_representation()}\n"
         if self.clockrate is not None : config_if += f"clockrate {self.clockrate}\n"
         print(config_if, file=file, end='') 
         super().generate_config_if(file)
@@ -127,8 +137,10 @@ class ROUTER_SUBINTERFACE_INFO(INTERFACE_INFO):
 
     def generate_config_if(self, file=sys.stdout):
         config_if = f"interface {self.name}\n"
+
         config_if += f"encapsulation {self.encapsulation} {self.vlan.number}\n"
-        config_if += f"ip address {self.vlan.gateway_address.ip} {self.vlan.gateway_address.mask}\n"
+        if isinstance(self.vlan.network_address, InetAddress6): config_if += "ipv6 enable"
+        config_if += f"ip address {self.vlan.network_address.address_representation()}\n"
         print(config_if, file=file, end='') 
         super().generate_config_if(file)
 
@@ -183,7 +195,8 @@ class DEVICE_INFO(ABC):
             basic_config += "ip ssh version 2\n"
             basic_config += f"line vty 0 15\n" #harcode the range
             basic_config += f"transport input ssh\n"
-            basic_config += f"login local\n\n"
+            basic_config += f"login local\n"
+        basic_config+="ipv6 unicast-routing\n\n"
         print(basic_config, file=file,end='')
 
     @abstractmethod
@@ -202,7 +215,7 @@ class DEVICE_INFO(ABC):
                 if route.is_default_information:
                     rip_config += "default-information originate\n"
                 for network in route.networks:
-                    rip_config += f"network {network}\n"
+                    rip_config += f"network {network.ip}\n"
                 for interface in route.passive_interfaces:
                     rip_config += f"passive interface {interface}\n"
                 rip_config += "exit\n"
