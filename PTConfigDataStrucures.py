@@ -21,14 +21,14 @@ class InetAddress4(InetAddress):
         #add a check to ipv4
         super().__init__(ipv4, mask)
     def address_representation(self)-> str:
-        return f"{self.ip} {self.mask}"
+        return f"ip address {self.ip} {self.mask}"
     
 class InetAddress6(InetAddress):
     def __init__(self, ipv6: str, mask: str):
         #add a check to ipv6
         super().__init__(ipv6, mask)
     def address_representation(self)-> str:
-        return f"{self.ip}/{self.mask}"
+        return f"ipv6 address {self.ip}/{self.mask}"
 
 @dataclass
 class ROUTE(ABC):
@@ -123,7 +123,7 @@ class ROUTER_INTERFACE_INFO(INTERFACE_INFO):
     def generate_config_if(self, file=sys.stdout):
         config_if = f"interface {self.name}\n"
         if self.vlan is not None:
-            if isinstance(self.vlan.network_address, InetAddress6): config_if += "ipv6 enable"
+            if isinstance(self.vlan.network_address, InetAddress6): config_if += "ipv6 enable\n"
             config_if += f"ip address {self.vlan.network_address.address_representation()}\n"
         if self.clockrate is not None : config_if += f"clockrate {self.clockrate}\n"
         print(config_if, file=file, end='') 
@@ -139,8 +139,8 @@ class ROUTER_SUBINTERFACE_INFO(INTERFACE_INFO):
         config_if = f"interface {self.name}\n"
 
         config_if += f"encapsulation {self.encapsulation} {self.vlan.number}\n"
-        if isinstance(self.vlan.network_address, InetAddress6): config_if += "ipv6 enable"
-        config_if += f"ip address {self.vlan.network_address.address_representation()}\n"
+        if isinstance(self.vlan.network_address, InetAddress6): config_if += "ipv6 enable\n"
+        config_if += self.vlan.network_address.address_representation() + "\n"
         print(config_if, file=file, end='') 
         super().generate_config_if(file)
 
@@ -207,7 +207,10 @@ class DEVICE_INFO(ABC):
     def generate_routes(self, file):
         for route in self.routes:
             if isinstance(route, STATIC_ROUTE):
-                print(f"ip route {route.network.ip} {route.network.mask} {route.hop.ip}\n", file=file)
+                if isinstance(route.network, InetAddress4):
+                    print(f"ip route {route.network.ip} {route.network.mask} {route.hop.ip}\n", file=file)
+                if isinstance(route.network, InetAddress6):
+                    print(f"ipv6 route {route.network.ip} {route.network.mask} {route.hop.ip}\n", file=file)
             elif isinstance(route, RIP_ROUTE):
                 rip_config: str = ""
                 rip_config += "router rip\n"
@@ -215,7 +218,8 @@ class DEVICE_INFO(ABC):
                 if route.is_default_information:
                     rip_config += "default-information originate\n"
                 for network in route.networks:
-                    rip_config += f"network {network.ip}\n"
+                    if isinstance(network, InetAddress4):
+                        rip_config += f"network {network.ip}\n"
                 for interface in route.passive_interfaces:
                     rip_config += f"passive interface {interface}\n"
                 rip_config += "exit\n"
