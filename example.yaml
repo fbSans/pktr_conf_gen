@@ -6,7 +6,7 @@
                 MOTD: "ACESSO NEGADO!!!",
                 LINE_CONSOLE: 0,
                 LINE_VTY: {START: 0, END: 4},
-                ENABLE_SSH: FALSE,
+                ENABLE_SSH: TRUE,
                 #ssh_key_bit: 
                 SSH_PASSWORD: "something_like_012345",
             },

@@ -154,7 +154,7 @@ class CONFIG_INFO:
     line_console : int = 0
     line_vty : tuple[int,int] = (1, 4)
     enable_ssh : bool = False
-    #ssh_key_bit_size : int = 1024   
+    ssh_key_size : int = 1024   
     ssh_password : str = ''
 
 class DEVICE_INFO(ABC):
@@ -191,7 +191,8 @@ class DEVICE_INFO(ABC):
                 basic_config += f"exit\n\n"    
             basic_config += f"banner motd # {self.config_info.motd} #\n\n"
         if self.config_info.enable_ssh:
-            basic_config += "crypto key generate rsa\n" #hardcode rsa
+            basic_config += "crypto key generate rsa\n"
+            basic_config += f"{self.config_info.ssh_key_size}\n"
             basic_config += "ip ssh version 2\n"
             basic_config += f"line vty 0 15\n" #harcode the range
             basic_config += f"transport input ssh\n"
@@ -221,7 +222,7 @@ class DEVICE_INFO(ABC):
                     if isinstance(network, InetAddress4):
                         rip_config += f"network {network.ip}\n"
                 for interface in route.passive_interfaces:
-                    rip_config += f"passive interface {interface}\n"
+                    rip_config += f"passive-interface {interface}\n"
                 rip_config += "exit\n"
                 print(rip_config, file=file, end='')
             else:

@@ -220,7 +220,7 @@ def parse_device_config(tokens: list[Token], variables: dict[str,int|str|list|di
     #non-default config will have its fieds initialized with None
     #The fields that are not changed to a not None value will recieve the DEFAULT_CONFIG fields
     if config_token.value != Keyword.DEFAULT_CONFIG.name:
-        config = CONFIG_INFO(None, None, None, None, None, None, None, None)
+        config = CONFIG_INFO(None, None, None, None, None, None, None, None, None)
     else:
         config = CONFIG_INFO() # DEFAULT_CONFIG is initialized with reasanable values
 
@@ -955,7 +955,7 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
     #Second Pass. 
     #Unspecified Device config values, that were initialized with None in the first pass (Note: not the 'None' string), will be filled with information of device config
     for device_info in device_infos:
-        if device_info.config_info is None: device_info = CONFIG_INFO() #If somehow config IF was not specified in the configuration file
+        if device_info.config_info is None: device_info.config_info = CONFIG_INFO() #If somehow config IF was not specified in the configuration file
         if device_info.config_info.domain_name is None: device_info.config_info.domain_name = default_configuration.domain_name
         if device_info.config_info.enable_ssh is None: device_info.config_info.enable_ssh = default_configuration.enable_ssh
         if device_info.config_info.hostname is None: device_info.config_info.hostname = default_configuration.hostname
@@ -963,6 +963,7 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
         if device_info.config_info.line_vty is None: device_info.config_info.line_vty= default_configuration.line_vty
         if device_info.config_info.motd is None: device_info.config_info.motd = default_configuration.motd
         if device_info.config_info.password is None: device_info.config_info.password = default_configuration.password
+        if device_info.config_info.ssh_key_size is None: device_info.config_info.ssh_key_size = default_configuration.ssh_key_size
         if device_info.config_info.ssh_password is None: device_info.config_info.ssh_password = default_configuration.ssh_password
 
     return device_infos
