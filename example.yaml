@@ -7,7 +7,7 @@
                 LINE_CONSOLE: 0,
                 LINE_VTY: {START: 0, END: 4},
                 ENABLE_SSH: TRUE,
-                #ssh_key_bit: 
+                SSH_KEY_SIZE: 512, 
                 SSH_PASSWORD: "something_like_012345",
             },
     #specifying all known vlns
@@ -72,6 +72,7 @@
             NAME: "R1",
             CONFIG: {
                 HOSTNAME: "ROUTER_MAPUTO",
+                SSH_KEY_SIZE: 1024,
                 #missing fields will be filled by DEFAULT_CONFIG
             },
             INTERFACES:

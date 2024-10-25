@@ -201,7 +201,8 @@ def parse_device_config(tokens: list[Token], variables: dict[str,int|str|list|di
                         Keyword.LINE_CONSOLE.name, 
                         Keyword.LINE_VTY.name, 
                         Keyword.ENABLE_SSH.name , 
-                        Keyword.SSH_PASSWORD.name
+                        Keyword.SSH_PASSWORD.name,
+                        Keyword.SSH_KEY_SIZE.name,
                     ]
 
     #start parsing
@@ -246,7 +247,7 @@ def parse_device_config(tokens: list[Token], variables: dict[str,int|str|list|di
                 if key.value in [Keyword.ENABLE_SSH.name]:
                     assert_expected_token(value, TokenType.KEYWORD)
                     expect_next_token_value([value], [Keyword.TRUE.name.upper(), Keyword.FALSE.name.upper()])
-                elif key.value in [Keyword.LINE_CONSOLE.name]:
+                elif key.value in [Keyword.LINE_CONSOLE.name, Keyword.SSH_KEY_SIZE.name]:
                     assert_expected_token(value, TokenType.INTEGER_LITERAL)
                 else:
                     assert_expected_token(value, TokenType.STRING_LITERAL)
@@ -268,6 +269,8 @@ def parse_device_config(tokens: list[Token], variables: dict[str,int|str|list|di
                         config.enable_ssh = parse_bool(value.value)
                     case Keyword.SSH_PASSWORD.name:
                         config.ssh_password = value.value
+                    case Keyword.SSH_KEY_SIZE.name:
+                        config.ssh_key_size = int(value.value)
                     case _:
                         panic(f"Unreachable. But somehow got here with key value {key.value}")
 

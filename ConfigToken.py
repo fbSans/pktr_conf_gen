@@ -56,6 +56,7 @@ class Keyword(Enum):
     START = iota()
     END = iota()
     ENABLE_SSH  = iota()
+    SSH_KEY_SIZE = iota()
     SSH_PASSWORD = iota()
 
     #vlan specific information
