@@ -55,7 +55,7 @@ def panic(msg: str):
     exit(1)
 
 
-#Invariat: Whole tokens only remain in one line, they can't be split accross lines
+#Invariant: Whole tokens only remain in one line, they can't be split accross lines
 #This function is now responsible for making line and col count for tokens
 def lex_config_from_string(config_string: str, row: int, filepath: str) -> list[Token]:
     tokens: list[Token] = []
