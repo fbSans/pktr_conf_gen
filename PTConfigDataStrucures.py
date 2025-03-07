@@ -209,9 +209,9 @@ class DEVICE_INFO(ABC):
         for route in self.routes:
             if isinstance(route, STATIC_ROUTE):
                 if isinstance(route.network, InetAddress4):
-                    print(f"ip route {route.network.ip} {route.network.mask} {route.hop.ip}\n", file=file)
+                    print(f"ip route {route.network.ip} {route.network.mask} {route.hop.ip}", file=file)
                 if isinstance(route.network, InetAddress6):
-                    print(f"ipv6 route {route.network.ip} {route.network.mask} {route.hop.ip}\n", file=file)
+                    print(f"ipv6 route {route.network.ip} {route.network.mask} {route.hop.ip}", file=file)
             elif isinstance(route, RIP_ROUTE):
                 rip_config: str = ""
                 rip_config += "router rip\n"
@@ -233,6 +233,7 @@ class DEVICE_INFO(ABC):
     def generate_config(self, file= sys.stdout):
         print("#" * 80, file=file)
         print(f"# Configuration for {self.name}\n\n", file=file, end='')
+        print("enable\n", file=file)
         print("configure terminal\n", file=file)
         self.generate_basic_config(file)
         self.generate_routes(file)
@@ -268,7 +269,9 @@ class SWITCH_INFO (DEVICE_INFO):
         #config
         for interface in self.interfaces:
             interface.generate_config_if(file)
-
+        print("end", file=file)
+        print("copy running-config startup-config", file=file)
+        print(file=file)
 
 
 class ROUTER_INFO (DEVICE_INFO):
