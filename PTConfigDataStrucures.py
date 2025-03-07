@@ -124,7 +124,7 @@ class ROUTER_INTERFACE_INFO(INTERFACE_INFO):
         config_if = f"interface {self.name}\n"
         if self.vlan is not None:
             if isinstance(self.vlan.network_address, InetAddress6): config_if += "ipv6 enable\n"
-            config_if += f"ip address {self.vlan.network_address.address_representation()}\n"
+            config_if += f"ip address {self.vlan.gateway_address.address_representation()}\n"
         if self.clockrate is not None : config_if += f"clockrate {self.clockrate}\n"
         print(config_if, file=file, end='') 
         super().generate_config_if(file)
@@ -140,7 +140,7 @@ class ROUTER_SUBINTERFACE_INFO(INTERFACE_INFO):
 
         config_if += f"encapsulation {self.encapsulation} {self.vlan.number}\n"
         if isinstance(self.vlan.network_address, InetAddress6): config_if += "ipv6 enable\n"
-        config_if += self.vlan.network_address.address_representation() + "\n"
+        config_if += self.vlan.gateway_address.address_representation() + "\n"
         print(config_if, file=file, end='') 
         super().generate_config_if(file)
 
