@@ -1,4 +1,3 @@
-# TODO not implemented 
 from PTConfigDataStrucures import *
 from ConfigToken import *
 from ConfigLexer import *
@@ -885,7 +884,7 @@ def parse_config(tokens: list[Token]) -> list[DEVICE_INFO]:                 # fo
     #for defered information we have: item, variable
     # where variable has the expected value for item
     # values are quoted, items and variables are not               
-    #intems
+    #items
     variables: dict = dict()
     vlan_infos: dict[int, VLAN_INFO] = dict()   
     device_infos: list[DEVICE_INFO] = []
